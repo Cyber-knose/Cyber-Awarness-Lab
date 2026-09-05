@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIM Swap Attack | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ff4488;}
+header h1{color:#ff4488;font-size:34px;text-shadow:0 0 20px #ff4488;}
+header p{color:#ff88aa;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #ff4488;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#ff4488;margin-bottom:15px;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.phone-ui{max-width:350px;margin:20px auto;background:#0a0a0a;border:2px solid #333;border-radius:20px;padding:20px;position:relative;}
+.phone-ui .status-bar{display:flex;justify-content:space-between;color:#888;font-size:12px;margin-bottom:15px;}
+.phone-ui .carrier{color:#ff4488;font-weight:bold;}
+.phone-ui .signal-bars{font-size:14px;}
+.phone-ui .notification{background:#111;border:1px solid #333;border-radius:10px;padding:12px;margin:8px 0;animation:slideIn .3s;}
+.phone-ui .notification.success{background:#002a00;border-color:#00ff66;}
+.phone-ui .notification.danger{background:#2a0000;border-color:#ff4444;}
+@keyframes slideIn{from{transform:translateX(-20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+.sms-line{background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:10px;margin:5px 0;font-size:13px;}
+.sms-line .from{color:#888;}
+.sms-line .msg{color:#ddd;margin-top:5px;}
+
+.btn{background:#ff4488;color:#fff;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #ff4488;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+.btn.success{background:#00ff66;color:#000;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+.result-box{padding:15px;border-radius:8px;margin:15px 0;display:none;}
+.result-box.success{background:#002a00;border:1px solid #00ff66;color:#00ff66;display:block;}
+.result-box.fail{background:#2a0000;border:1px solid #ff4444;color:#ff4444;display:block;}
+.result-box.info{background:#2a0015;border:1px solid #ff4488;color:#ff88aa;display:block;}
+
+.tip-box{background:#2a0015;border-left:4px solid #ff4488;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ff4488;color:#ff88aa;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>📱 SIM Swap Attack Lab</h1>
+<p>Learn how attackers hijack phone numbers to bypass SMS-based authentication</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>📱 SIM Swapping Attack Simulation</h2>
+<p class="desc">A SIM swap attack occurs when an attacker convinces a mobile carrier to transfer a victim's phone number to a SIM card in the attacker's possession, gaining access to SMS-based 2FA codes and account recovery messages.</p>
+
+<div class="phone-ui">
+<div class="status-bar">
+<span class="carrier">📶 MobileNet</span>
+<span class="signal-bars">▂▄▆█</span>
+</div>
+<div style="text-align:center;font-size:12px;color:#888;margin-bottom:10px;" id="simStatus">✅ SIM Active — John's iPhone</div>
+<div id="phoneNotifications">
+<div class="notification" style="border-left:3px solid #00ff66;">
+📩 SMS from: <strong style="color:#00ff66;">Bank of America</strong><br>
+<span style="font-size:13px;color:#ddd;">Your verification code: <strong style="color:#00ff66;font-size:18px;">847291</strong></span>
+</div>
+</div>
+</div>
+
+<button class="btn danger" onclick="simulateSIMSwap()">⚠️ Initiate SIM Swap</button>
+<button class="btn" onclick="resetSIM()">🔄 Reset</button>
+
+<div id="simResult" class="result-box"></div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ Protection</h2>
+<div class="tip-box">
+<strong>🛡️ How to Protect Against SIM Swapping:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔐 Use authenticator apps (Google Authenticator, Authy) instead of SMS 2FA</li>
+<li>🔐 Set a PIN/password on your mobile carrier account</li>
+<li>🔐 Use hardware security keys (FIDO2/U2F) for critical accounts</li>
+<li>🔐 Enable account recovery via email rather than phone number</li>
+<li>🔐 Use a separate "Google Voice" number for 2FA that's harder to swap</li>
+<li>🔐 Monitor for sudden loss of cellular service</li>
+<li>🔐 Contact carrier immediately if service drops unexpectedly</li>
+</ul>
+</div>
+<div class="tip-box" style="border-left-color:#00ff66;">
+<strong>🚨 Signs Your SIM May Have Been Swapped:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>📱 Phone shows "No Service" but others in area have signal</li>
+<li>🔒 Unable to send/receive SMS or make calls</li>
+<li>📧 Receiving password reset emails you didn't request</li>
+<li>🏦 Unusual bank account activity or notifications</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ff4488";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let swapped = false;
+
+function simulateSIMSwap(){
+if(swapped) return;
+swapped = true;
+
+document.getElementById('simStatus').innerHTML = '⚠️ SIM SWAPPED — Attacker now controls John\'s number';
+document.getElementById('simStatus').style.color = '#ff4444';
+
+const notifications = document.getElementById('phoneNotifications');
+const steps = [
+{type: 'danger', html: '📩 SMS from: <strong style="color:#ff4444;">Bank of America</strong><br><span style="font-size:13px;color:#ddd;">🔐 Password Reset Code: <strong style="color:#ff4444;font-size:18px;">629184</strong></span>'},
+{type: 'danger', html: '📩 SMS from: <strong style="color:#ff4444;">Google</strong><br><span style="font-size:13px;color:#ddd;">🔑 Your Google verification code: <strong style="color:#ff4444;">473829</strong></span>'},
+{type: 'danger', html: '📩 SMS from: <strong style="color:#ff4444;">Coinbase</strong><br><span style="font-size:13px;color:#ddd;">💰 Withdrawal of 2.5 BTC requested. Code: <strong style="color:#ff4444;">918273</strong></span>'},
+{type: 'danger', html: '📩 SMS from: <strong style="color:#ff4444;">PayPal</strong><br><span style="font-size:13px;color:#ddd;">💳 $4,500 transfer to account ending in 8842. Code: <strong style="color:#ff4444;">335577</strong></span>'}
+];
+
+let idx = 0;
+const interval = setInterval(() => {
+if(idx >= steps.length){
+clearInterval(interval);
+document.getElementById('simResult').className = 'result-box fail';
+document.getElementById('simResult').innerHTML = '💀 <strong>SIM Swap Attack Complete!</strong><br><br>'+
+'🔓 Attacker intercepted all SMS-based 2FA codes<br>'+
+'🏦 Bank account drained: $12,847<br>'+
+'💰 Crypto stolen: 2.5 BTC ($150,000)<br>'+
+'📧 Email accounts compromised and locked out<br><br>'+
+'<strong>This is why SMS 2FA is dangerous!</strong> Use authenticator apps instead.';
+return;
+}
+const step = steps[idx];
+const notif = document.createElement('div');
+notif.className = 'notification ' + step.type;
+notif.innerHTML = step.html;
+notifications.appendChild(notif);
+idx++;
+}, 2000);
+}
+
+function resetSIM(){
+swapped = false;
+document.getElementById('simStatus').innerHTML = '✅ SIM Active — John\'s iPhone';
+document.getElementById('simStatus').style.color = '#888';
+document.getElementById('phoneNotifications').innerHTML = '<div class="notification" style="border-left:3px solid #00ff66;">📩 SMS from: <strong style="color:#00ff66;">Bank of America</strong><br><span style="font-size:13px;color:#ddd;">Your verification code: <strong style="color:#00ff66;font-size:18px;">847291</strong></span></div>';
+document.getElementById('simResult').className = 'result-box';
+document.getElementById('simResult').style.display = 'none';
+}
+</script>
+</body>
+</html>

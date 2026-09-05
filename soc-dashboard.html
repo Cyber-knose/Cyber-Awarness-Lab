@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberSOC Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+background:#06090f;
+color:#fff;
+overflow-x:hidden;
+}
+
+header{
+
+height:70px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+padding:0 30px;
+
+background:#0b121f;
+
+border-bottom:1px solid #00ff99;
+
+position:sticky;
+top:0;
+
+z-index:100;
+
+}
+
+.logo{
+
+font-size:26px;
+font-weight:bold;
+color:#00ff99;
+
+}
+
+#clock{
+
+font-size:18px;
+color:#8efed1;
+
+}
+
+.wrapper{
+
+display:grid;
+grid-template-columns:250px 1fr;
+
+min-height:calc(100vh - 70px);
+
+}
+
+.sidebar{
+
+background:#0b121f;
+
+padding:20px;
+
+border-right:1px solid #00ff99;
+
+}
+
+.sidebar h2{
+
+margin-bottom:20px;
+
+color:#00ff99;
+
+}
+
+.sidebar a{
+
+display:block;
+
+padding:14px;
+
+margin-bottom:10px;
+
+background:#111a28;
+
+text-decoration:none;
+
+color:white;
+
+border-radius:8px;
+
+transition:.3s;
+
+}
+
+.sidebar a:hover{
+
+background:#00ff99;
+
+color:black;
+
+}
+
+.main{
+
+padding:25px;
+
+}
+
+.cards{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+gap:20px;
+
+margin-bottom:25px;
+
+}
+
+.card{
+
+background:#101827;
+
+padding:20px;
+
+border-radius:10px;
+
+border:1px solid #00ff99;
+
+box-shadow:0 0 15px rgba(0,255,120,.15);
+
+}
+
+.card h4{
+
+color:#8efed1;
+
+margin-bottom:12px;
+
+}
+
+.card h1{
+
+font-size:38px;
+
+}
+
+.grid{
+
+display:grid;
+
+grid-template-columns:2fr 1fr;
+
+gap:20px;
+
+margin-bottom:25px;
+
+}
+
+.panel{
+
+background:#101827;
+
+border:1px solid #00ff99;
+
+border-radius:10px;
+
+padding:20px;
+
+}
+
+.panel h3{
+
+margin-bottom:20px;
+
+color:#00ff99;
+
+}
+
+.feed{
+
+height:350px;
+
+overflow:auto;
+
+font-size:14px;
+
+}
+
+.feed div{
+
+padding:10px;
+
+border-bottom:1px solid #222;
+
+}
+
+.terminal{
+
+height:300px;
+
+background:black;
+
+color:#00ff66;
+
+padding:15px;
+
+overflow:auto;
+
+font-family:monospace;
+
+}
+
+.progress{
+
+height:10px;
+
+background:#333;
+
+border-radius:20px;
+
+overflow:hidden;
+
+margin-bottom:20px;
+
+}
+
+.fill{
+
+height:100%;
+
+background:#00ff99;
+
+}
+
+.status{
+
+display:flex;
+
+justify-content:space-between;
+
+margin-bottom:8px;
+
+}
+
+footer{
+
+text-align:center;
+
+padding:20px;
+
+color:#aaa;
+
+border-top:1px solid #00ff99;
+
+margin-top:30px;
+
+}
+
+@media(max-width:900px){
+
+.wrapper{
+
+grid-template-columns:1fr;
+
+}
+
+.sidebar{
+
+display:none;
+
+}
+
+.grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+
+CyberSOC Dashboard
+
+</div>
+
+<div id="clock"></div>
+
+</header>
+
+<div class="wrapper">
+
+<div class="sidebar">
+
+<h2>Navigation</h2>
+
+<a href="#">Dashboard</a>
+
+<a href="#">Threats</a>
+
+<a href="#">Incidents</a>
+
+<a href="#">Analytics</a>
+
+<a href="#">Network</a>
+
+<a href="#">Endpoints</a>
+
+<a href="#">Reports</a>
+
+<a href="#">Settings</a>
+
+</div>
+
+<div class="main">
+
+<div class="cards">
+
+<div class="card">
+
+<h4>Threat Level</h4>
+
+<h1 id="threatLevel">LOW</h1>
+
+</div>
+
+<div class="card">
+
+<h4>Active Alerts</h4>
+
+<h1 id="alerts">18</h1>
+
+</div>
+
+<div class="card">
+
+<h4>Blocked Events</h4>
+
+<h1 id="blocked">136</h1>
+
+</div>
+
+<div class="card">
+
+<h4>Security Score</h4>
+
+<h1 id="score">95%</h1>
+
+</div>
+
+</div>
+
+<div class="grid">
+
+<div class="panel">
+
+<h3>Attack Analytics</h3>
+
+<canvas id="attackChart" height="110"></canvas>
+
+</div>
+
+<div class="panel">
+
+<h3>Threat Feed</h3>
+
+<div class="feed" id="feed">
+
+</div>
+
+</div>
+
+</div>
+
+<div class="grid">
+
+<div class="panel">
+
+<h3>Incident Timeline</h3>
+
+<div class="terminal" id="terminal">
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<h3>System Health</h3>
+
+<div class="status">
+
+<span>Firewall</span>
+
+<span>98%</span>
+
+</div>
+
+<div class="progress">
+
+<div class="fill" style="width:98%"></div>
+
+</div>
+
+<div class="status">
+
+<span>Endpoints</span>
+
+<span>95%</span>
+
+</div>
+
+<div class="progress">
+
+<div class="fill" style="width:95%"></div>
+
+</div>
+
+<div class="status">
+
+<span>Email Security</span>
+
+<span>92%</span>
+
+</div>
+
+<div class="progress">
+
+<div class="fill" style="width:92%"></div>
+
+</div>
+
+<div class="status">
+
+<span>Cloud Security</span>
+
+<span>89%</span>
+
+</div>
+
+<div class="progress">
+
+<div class="fill" style="width:89%"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<footer>
+
+CyberSOC Dashboard • Educational Simulation
+
+</footer>
+
+<script>
+
+/* ---------- Live Clock ---------- */
+
+function updateClock(){
+
+const now=new Date();
+
+document.getElementById("clock").innerHTML=
+now.toLocaleTimeString();
+
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+
+/* ---------- Attack Chart ---------- */
+
+const ctx=document.getElementById("attackChart");
+
+const attackChart=new Chart(ctx,{
+
+type:"line",
+
+data:{
+
+labels:[
+"00:00",
+"04:00",
+"08:00",
+"12:00",
+"16:00",
+"20:00"
+],
+
+datasets:[
+
+{
+
+label:"Attacks",
+
+data:[12,28,16,34,42,29],
+
+borderColor:"#00ff99",
+
+backgroundColor:"rgba(0,255,153,.15)",
+
+fill:true,
+
+tension:.4
+
+}
+
+]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+labels:{
+
+color:"white"
+
+}
+
+}
+
+},
+
+scales:{
+
+x:{
+
+ticks:{color:"white"},
+
+grid:{color:"#222"}
+
+},
+
+y:{
+
+ticks:{color:"white"},
+
+grid:{color:"#222"}
+
+}
+
+}
+
+}
+
+});
+
+
+/* ---------- Threat Feed ---------- */
+
+const feed=document.getElementById("feed");
+
+const feedMessages=[
+
+"Firewall blocked suspicious connection",
+
+"Endpoint scan completed",
+
+"User password reset completed",
+
+"Phishing awareness training completed",
+
+"DNS request verified",
+
+"VPN session established",
+
+"Network scan completed",
+
+"Malware signature updated",
+
+"Security policy synchronized",
+
+"Email attachment scanned"
+
+];
+
+function addFeed(){
+
+const div=document.createElement("div");
+
+const msg=feedMessages[
+Math.floor(Math.random()*feedMessages.length)
+];
+
+const time=new Date().toLocaleTimeString();
+
+div.innerHTML="<strong>"+time+"</strong> - "+msg;
+
+feed.prepend(div);
+
+if(feed.children.length>18){
+
+feed.removeChild(feed.lastChild);
+
+}
+
+}
+
+setInterval(addFeed,2500);
+
+for(let i=0;i<8;i++){
+
+addFeed();
+
+}
+
+
+/* ---------- Incident Timeline ---------- */
+
+const terminal=document.getElementById("terminal");
+
+const terminalLogs=[
+
+"Initializing SOC dashboard...",
+
+"Threat intelligence synchronized.",
+
+"Monitoring network traffic.",
+
+"Scanning endpoints.",
+
+"Checking firewall integrity.",
+
+"Email gateway operational.",
+
+"Cloud security healthy.",
+
+"Identity services verified.",
+
+"Security policies loaded.",
+
+"No critical incidents detected."
+
+];
+
+function terminalEntry(){
+
+const line=document.createElement("div");
+
+line.innerHTML="> "+terminalLogs[
+Math.floor(Math.random()*terminalLogs.length)
+];
+
+terminal.appendChild(line);
+
+terminal.scrollTop=terminal.scrollHeight;
+
+if(terminal.children.length>20){
+
+terminal.removeChild(terminal.firstChild);
+
+}
+
+}
+
+setInterval(terminalEntry,3000);
+
+for(let i=0;i<6;i++){
+
+terminalEntry();
+
+}
+
+
+/* ---------- Threat Level ---------- */
+
+const threatLevels=[
+
+"LOW",
+
+"GUARDED",
+
+"ELEVATED"
+
+];
+
+let threatIndex=0;
+
+setInterval(()=>{
+
+document.getElementById("threatLevel").innerHTML=
+threatLevels[threatIndex];
+
+threatIndex++;
+
+if(threatIndex>=threatLevels.length){
+
+threatIndex=0;
+
+}
+
+},7000);
+
+
+/* ---------- Dashboard Counters ---------- */
+
+function random(min,max){
+
+return Math.floor(Math.random()*(max-min+1))+min;
+
+}
+
+setInterval(()=>{
+
+document.getElementById("alerts").innerHTML=
+random(10,30);
+
+document.getElementById("blocked").innerHTML=
+random(120,250);
+
+document.getElementById("score").innerHTML=
+random(90,99)+"%";
+
+attackChart.data.datasets[0].data=
+Array.from({length:6},()=>random(10,50));
+
+attackChart.update();
+
+},5000);
+
+
+/* ---------- Startup Animation ---------- */
+
+document.querySelectorAll(".card").forEach((card,index)=>{
+
+card.style.opacity="0";
+
+card.style.transform="translateY(30px)";
+
+setTimeout(()=>{
+
+card.style.transition=".6s";
+
+card.style.opacity="1";
+
+card.style.transform="translateY(0)";
+
+},index*150);
+
+});
+
+</script>
+
+</body>
+</html>

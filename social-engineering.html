@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Engineering Labs | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ff8800;}
+header h1{color:#ff8800;font-size:34px;text-shadow:0 0 20px #ff8800;font-family:'Orbitron',sans-serif;}
+header p{color:#ffcc88;margin-top:8px;}
+.container{max-width:1200px;margin:30px auto;padding:20px;}
+
+/* Tabs */
+.tab-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:25px;background:rgba(255,255,255,.03);border-radius:12px;padding:10px;border:1px solid #ff8800;}
+.tab-btn{background:#111;border:1px solid #333;color:#aaa;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:12px;transition:.3s;flex:1;min-width:100px;text-align:center;font-family:'Orbitron',sans-serif;}
+.tab-btn:hover{border-color:#ff8800;color:#fff;}
+.tab-btn.active{background:#ff8800;color:#000;border-color:#ff8800;font-weight:bold;}
+.tab-btn .emoji{font-size:18px;display:block;margin-bottom:3px;}
+
+/* Content Cards */
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #ff8800;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);display:none;}
+.lab-content.active{display:block;}
+.lab-content h2{color:#ff8800;margin-bottom:15px;font-family:'Orbitron',sans-serif;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+/* Simulated Email */
+.email-sim{background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;line-height:1.8;}
+.email-sim .from{color:#888;font-size:13px;}
+.email-sim .from span{color:#ffaa00;}
+.email-sim .subject{color:#fff;font-size:16px;margin:10px 0;}
+.email-sim .subject.suspicious{color:#ff4444;}
+.email-sim .body{color:#ccc;font-size:14px;margin-top:10px;}
+
+/* Phishing indicators */
+.phish-indicator{display:inline-block;padding:4px 12px;border-radius:4px;font-size:12px;margin:3px;font-weight:bold;}
+.phish-indicator.danger{background:#2a0000;color:#ff4444;border:1px solid #ff4444;}
+.phish-indicator.safe{background:#002a00;color:#00ff66;border:1px solid #00ff66;}
+
+/* SMS Bubble */
+.sms-bubble{background:#111;border:2px solid #333;border-radius:16px;padding:20px;max-width:400px;margin:15px 0;}
+.sms-bubble .sms-header{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+.sms-bubble .sms-number{color:#ff4444;font-weight:bold;}
+.sms-bubble .sms-message{color:#ddd;line-height:1.6;}
+
+/* Vishing card */
+.vishing-card{background:#111;border:2px solid #333;border-radius:10px;padding:20px;margin:15px 0;display:flex;gap:15px;align-items:center;flex-wrap:wrap;}
+.vishing-card .phone-icon{font-size:40px;}
+.vishing-card .call-details{flex:1;}
+.vishing-card .call-details .caller{color:#ff4444;font-size:18px;}
+.vishing-card .call-details .reason{color:#aaa;margin-top:5px;}
+
+/* Quiz buttons */
+.quiz-btn{background:#ff8800;color:#000;border:none;padding:10px 20px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.quiz-btn:hover{transform:scale(1.03);box-shadow:0 0 15px #ff8800;}
+.quiz-btn.green{background:#00ff66;}
+.quiz-btn.red{background:#ff4444;color:#fff;}
+.quiz-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* USB Drop */
+.usb-badge{display:inline-block;background:#222;border:2px solid #ff8800;border-radius:12px;padding:20px 30px;text-align:center;margin:15px;cursor:pointer;transition:.3s;}
+.usb-badge:hover{transform:scale(1.1);box-shadow:0 0 30px #ff8800;}
+.usb-badge .icon{font-size:48px;display:block;}
+.usb-badge .label{color:#ff8800;margin-top:8px;font-weight:bold;}
+
+/* Fake Login Portal */
+.login-sim{background:#0a0a0a;border:2px solid #ff8800;border-radius:12px;padding:30px;max-width:380px;margin:20px auto;text-align:center;}
+.login-sim .login-logo{font-size:40px;margin-bottom:10px;}
+.login-sim .login-url{color:#888;font-size:12px;margin-bottom:20px;word-break:break-all;}
+.login-sim input{width:100%;padding:10px;margin:8px 0;background:#111;border:1px solid #333;color:#fff;border-radius:6px;}
+.login-sim input:focus{border-color:#ff8800;outline:none;}
+.login-sim .login-btn{background:#ff8800;color:#000;border:none;padding:12px;width:100%;font-weight:bold;border-radius:6px;cursor:pointer;margin-top:10px;}
+
+/* Result box */
+.result-box{padding:15px;border-radius:8px;margin:15px 0;display:none;}
+.result-box.success{background:#002a00;border:1px solid #00ff66;color:#00ff66;display:block;}
+.result-box.fail{background:#2a0000;border:1px solid #ff4444;color:#ff4444;display:block;}
+.result-box.info{background:#001a2a;border:1px solid #00ccff;color:#66ddff;display:block;}
+
+/* Profile Cards */
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin:15px 0;}
+.profile-card{background:#111;border:1px solid #333;border-radius:10px;padding:20px;text-align:center;transition:.3s;}
+.profile-card:hover{border-color:#ff8800;}
+.profile-card .avatar{font-size:48px;}
+.profile-card .name{color:#ff8800;font-weight:bold;margin-top:8px;}
+.profile-card .role{color:#888;font-size:13px;}
+
+.tip-box{background:#0a0a00;border-left:4px solid #00ff66;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ff8800;color:#ffcc88;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>📧 Social Engineering Labs</h1>
+<p>Interactive educational modules to recognize and resist social engineering attacks</p>
+</header>
+<div class="container">
+
+<div class="tab-bar" id="tabBar">
+<button class="tab-btn active" onclick="switchTab(0)"><span class="emoji">🎣</span>Phishing Email</button>
+<button class="tab-btn" onclick="switchTab(1)"><span class="emoji">🎯</span>Spear Phishing</button>
+<button class="tab-btn" onclick="switchTab(2)"><span class="emoji">🐋</span>Whaling</button>
+<button class="tab-btn" onclick="switchTab(3)"><span class="emoji">📱</span>Smishing</button>
+<button class="tab-btn" onclick="switchTab(4)"><span class="emoji">📞</span>Vishing</button>
+<button class="tab-btn" onclick="switchTab(5)"><span class="emoji">📷</span>Quishing</button>
+<button class="tab-btn" onclick="switchTab(6)"><span class="emoji">🔐</span>Fake Login</button>
+<button class="tab-btn" onclick="switchTab(7)"><span class="emoji">🛠️</span>Tech Support</button>
+<button class="tab-btn" onclick="switchTab(8)"><span class="emoji">💾</span>USB Drop</button>
+<button class="tab-btn" onclick="switchTab(9)"><span class="emoji">👤</span>Social Impersonation</button>
+</div>
+
+<!-- Lab 0: Phishing Email -->
+<div class="lab-content active" id="lab0">
+<h2>🎣 Phishing Email — General</h2>
+<p class="desc">A broad, mass-targeted email designed to trick recipients into clicking a malicious link or opening an infected attachment.</p>
+<div class="email-sim">
+<div class="from">📨 From: <span>security-alert@amaz0n-secure.example</span></div>
+<div class="subject suspicious">⚠️ URGENT: Your Amazon account has been compromised!</div>
+<div class="body">
+<p>Dear Customer,</p>
+<p style="margin:10px 0;">We detected unusual activity on your account. Your account will be <strong style="color:#ff4444;">suspended within 24 hours</strong> if you do not verify your identity.</p>
+<p>Click below to restore your account:</p>
+<div style="background:#1a1a1a;padding:12px;border-radius:6px;margin:10px 0;text-align:center;">
+<span style="color:#ff4444;">http://amaz0n-verify.example/login</span>
+</div>
+<p style="color:#888;font-size:12px;">(Hover the link — see it's not the real amazon.com)</p>
+</div>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(0,true)">🚩 This is a Phishing Email</button>
+<button class="quiz-btn green" onclick="showPhishResult(0,false)">✅ This looks Legitimate</button>
+<div id="result0" class="result-box"></div>
+</div>
+
+<!-- Lab 1: Spear Phishing -->
+<div class="lab-content" id="lab1">
+<h2>🎯 Spear Phishing — Targeted Attack</h2>
+<p class="desc">A personalized attack targeting a specific individual using known details to appear authentic.</p>
+<div class="email-sim">
+<div class="from">📨 From: <span>jennifer.wilson@company-partners.example</span></div>
+<div class="subject suspicious">Re: Q4 Budget Report — Action Required</div>
+<div class="body">
+<p>Hi Sarah,</p>
+<p style="margin:10px 0;">I'm following up on our meeting last Tuesday about the Q4 budget revisions. John from Finance mentioned you'd be handling the updates.</p>
+<p>Attached is the revised budget template with notes from our CFO. Please review and sign before EOD.</p>
+<div style="background:#1a1a1a;padding:10px;border-radius:6px;margin:10px 0;">
+📎 <span style="color:#ff8800;">Q4_Budget_Rev2.docm</span> (2.4 MB)
+</div>
+<p style="color:#888;font-size:12px;">Note: The attacker researched the target on LinkedIn to craft this believable email.</p>
+</div>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(1,true)">🚩 Spear Phishing</button>
+<button class="quiz-btn green" onclick="showPhishResult(1,false)">✅ Legitimate</button>
+<div id="result1" class="result-box"></div>
+</div>
+
+<!-- Lab 2: Whaling -->
+<div class="lab-content" id="lab2">
+<h2>🐋 Whaling — Targeting Executives</h2>
+<p class="desc">A highly targeted attack aimed at senior executives (CEO, CFO, CTO) with authority to authorize payments.</p>
+<div class="email-sim">
+<div class="from">📨 From: <span>michael.rodgers@board-urgent.example</span></div>
+<div class="subject suspicious">🛑 CONFIDENTIAL: Urgent wire transfer required</div>
+<div class="body">
+<p>James,</p>
+<p style="margin:10px 0;">I'm in a closed-door negotiation and need an immediate wire transfer of $47,500 to our legal counsel for the acquisition. Details below.</p>
+<p>Bank: Deutsche Bank<br>Account: 8342-1100-2291-4432<br>SWIFT: DEUTDEFF<br>Routing: 110002291</p>
+<p style="color:#ff4444;">This is time-sensitive — must be sent within the next 2 hours.</p>
+<p style="color:#888;font-size:12px;">— Michael Rodgers (CEO)</p>
+</div>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(2,true)">🚩 Whaling Attack</button>
+<button class="quiz-btn green" onclick="showPhishResult(2,false)">✅ Real CEO Request</button>
+<div id="result2" class="result-box"></div>
+</div>
+
+<!-- Lab 3: Smishing (SMS) -->
+<div class="lab-content" id="lab3">
+<h2>📱 Smishing — SMS Phishing</h2>
+<p class="desc">Phishing attacks conducted via text messages, often with urgent calls to action and shortened URLs.</p>
+<div class="sms-bubble">
+<div class="sms-header">
+<span style="font-size:24px;">📱</span>
+<div><div class="sms-number">+1 (808) 555-0199</div><div style="color:#888;font-size:12px;">Mobile Carrier</div></div>
+</div>
+<div class="sms-message">
+⚠️ FREE ALERT: Your mobile bill of $249.99 is overdue. Service will be suspended in 24 hours. Pay now to avoid interruption:
+<br><br>
+<span style="color:#ff8800;">http://bit.ly/3xPayNow</span>
+<br><br>
+Reply STOP to opt out
+</div>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(3,true)">🚩 Smishing</button>
+<button class="quiz-btn green" onclick="showPhishResult(3,false)">✅ Real Carrier</button>
+<div id="result3" class="result-box"></div>
+</div>
+
+<!-- Lab 4: Vishing (Voice) -->
+<div class="lab-content" id="lab4">
+<h2>📞 Vishing — Voice Phishing</h2>
+<p class="desc">Phone-based social engineering where attackers pose as legitimate organizations to extract sensitive information.</p>
+<div class="vishing-card">
+<div class="phone-icon">📞</div>
+<div class="call-details">
+<div class="caller">⚠️ Incoming Call: "Microsoft Security Team"</div>
+<div class="reason">Caller ID: +1 (800) 555-0192 (spoofed)</div>
+</div>
+</div>
+<div style="background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;line-height:2;">
+<p><em>Call Transcript (Simulated):</em></p>
+<p style="color:#ff6666;"><strong>Scammer:</strong> "Hello, this is David from Microsoft Windows Security. We've detected that your computer has been infected with 3 viruses. I'm calling to help you remove them before your data is stolen."</p>
+<p style="color:#aaa;margin:10px 0;"><strong>You:</strong> "What? I didn't notice anything wrong..."</p>
+<p style="color:#ff6666;"><strong>Scammer:</strong> "That's because the malware is hidden. I need you to open the Event Viewer and check for error codes. If you give me remote access, I can fix this immediately."</p>
+<p style="color:#aaa;margin:10px 0;">... The scammer will then ask for credit card details to "activate the security package."</p>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(4,true)">🚩 This is Vishing</button>
+<button class="quiz-btn green" onclick="showPhishResult(4,false)">✅ Real Microsoft</button>
+<div id="result4" class="result-box"></div>
+</div>
+
+<!-- Lab 5: Quishing (QR Code) -->
+<div class="lab-content" id="lab5">
+<h2>📷 QR Code Phishing (Quishing)</h2>
+<p class="desc">Attackers place malicious QR codes in public places or emails that redirect to phishing sites when scanned.</p>
+<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin:20px 0;">
+<div style="background:#fff;padding:20px;border-radius:10px;text-align:center;display:inline-block;">
+<div style="background:#000;width:120px;height:120px;margin:auto;display:flex;align-items:center;justify-content:center;font-size:60px;color:#fff;">📱</div>
+<p style="color:#000;margin-top:8px;font-weight:bold;font-size:12px;">SCAN ME FOR FREE WiFi</p>
+</div>
+<div style="flex:1;min-width:250px;background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;">
+<p><strong style="color:#ff8800;">Warning!</strong> This QR code in a coffee shop actually redirects to:</p>
+<p style="color:#ff4444;word-break:break-all;margin-top:8px;font-size:13px;">http://free-wifi-login.example/credentials</p>
+<p style="color:#888;font-size:13px;margin-top:8px;">Attackers print fake QR codes on stickers and place them over legitimate ones in cafes, airports, and parking meters.</p>
+</div>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(5,true)">🚩 Quishing Attack</button>
+<button class="quiz-btn green" onclick="showPhishResult(5,false)">✅ Safe QR Code</button>
+<div id="result5" class="result-box"></div>
+</div>
+
+<!-- Lab 6: Fake Login Portal -->
+<div class="lab-content" id="lab6">
+<h2>🔐 Fake Login Portal</h2>
+<p class="desc">Attackers create perfect replicas of login pages to steal credentials when you click a phishing link.</p>
+<div class="login-sim">
+<div class="login-logo">📧</div>
+<h3 style="color:#ff8800;">Outlook Web Access</h3>
+<div class="login-url">🌐 https://outlook-verify.example.microsoft-login.com</div>
+<input type="text" placeholder="Email address" value="user@company.com" onfocus="showLoginWarning(6)">
+<input type="password" placeholder="Password" value="••••••••" onfocus="showLoginWarning(6)">
+<button class="login-btn" onclick="showLoginWarning(6)">Sign In</button>
+<div id="loginWarning6" style="color:#ff4444;font-size:13px;margin-top:10px;display:none;">⚠️ This is a FAKE login page! Your credentials would be stolen.</div>
+</div>
+<div class="tip-box" style="margin-top:20px;">
+<strong>🔍 How to spot fake login portals:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2;">
+<li>Check the URL carefully — look for misspellings or extra subdomains</li>
+<li>Real sites use HTTPS with valid certificates (click the padlock icon)</li>
+<li>Never sign in from an email link — type the URL manually</li>
+<li>Use a password manager — it won't autofill on fake sites</li>
+</ul>
+</div>
+</div>
+
+<!-- Lab 7: Fake Tech Support -->
+<div class="lab-content" id="lab7">
+<h2>🛠️ Fake Tech Support Scam</h2>
+<p class="desc">Scammers pose as tech support from Microsoft, Apple, or your ISP to gain remote access to your computer.</p>
+<div style="background:#1a0000;border:2px solid #ff4444;border-radius:12px;padding:25px;margin:20px 0;text-align:center;">
+<div style="font-size:64px;">⚠️</div>
+<h3 style="color:#ff4444;margin:15px 0;">Your PC May Be Infected!</h3>
+<p style="color:#ff8888;">Windows Defender Alert: 3 critical threats detected</p>
+<div style="margin:20px 0;">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='4'%3E%3Crect width='200' height='4' fill='%23ff4444'/%3E%3C/svg%3E" style="width:100%;max-width:300px;">
+</div>
+<div style="background:#111;border:1px solid #ff4444;border-radius:8px;padding:15px;display:inline-block;text-align:left;margin:10px 0;">
+<div style="color:#ff4444;">🔴 Trojan.Generic.284732</div>
+<div style="color:#ff4444;">🔴 Spyware.Agent.9912</div>
+<div style="color:#ff4444;">🔴 Rootkit.Boot.445</div>
+</div>
+<p style="color:#aaa;margin:20px 0;font-size:14px;">Call Windows Support immediately: <span style="color:#ff8800;font-size:20px;">+1-800-555-0199</span></p>
+<p style="color:#888;font-size:12px;">This is a FAKE popup — real Windows Defender never shows phone numbers.</p>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(7,true)">🚩 Tech Support Scam</button>
+<button class="quiz-btn green" onclick="showPhishResult(7,false)">✅ Real Alert</button>
+<div id="result7" class="result-box"></div>
+</div>
+
+<!-- Lab 8: USB Drop Attack -->
+<div class="lab-content" id="lab8">
+<h2>💾 USB Drop Attack Simulation</h2>
+<p class="desc">Attackers leave infected USB drives in parking lots, lobbies, and common areas — waiting for a curious person to plug them in.</p>
+<div style="text-align:center;margin:20px 0;">
+<div class="usb-badge" onclick="usbClicked()">
+<span class="icon">💾</span>
+<span class="label">"EMPLOYEE BONUSES_Q4.xlsx"</span>
+</div>
+<p style="color:#888;font-size:13px;">Click the USB drive to see what happens...</p>
+<div id="usbResult" style="display:none;margin-top:20px;">
+<div class="result-box fail">
+⚠️ You just plugged in a malicious USB device! The BadUSB automatically:<br><br>
+✅ Emulated a keyboard (HID attack)<br>
+✅ Opened a reverse shell in 3 seconds<br>
+✅ Installed persistent backdoor<br>
+✅ Exfiltrated documents to attacker's server<br><br>
+<strong>This is a common social engineering tactic used in penetration tests.</strong>
+</div>
+</div>
+</div>
+<div class="tip-box">
+<strong>🛡️ Never plug in unknown USB drives!</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2;">
+<li>🔌 USB devices can emulate keyboards — typing commands automatically</li>
+<li>🔌 Use USB data blockers (USB condoms) for charging only</li>
+<li>🔌 Disable AutoRun on Windows to prevent automatic execution</li>
+<li>🔌 Report found USB drives to IT security — don't plug them in</li>
+</ul>
+</div>
+</div>
+
+<!-- Lab 9: Social Media Impersonation -->
+<div class="lab-content" id="lab9">
+<h2>👤 Social Media Impersonation</h2>
+<p class="desc">Attackers create fake accounts impersonating trusted people or brands to gather intelligence or trick connections.</p>
+<div class="profile-grid">
+<div class="profile-card">
+<div class="avatar">👤</div>
+<div class="name">Sarah Connors</div>
+<div class="role">HR Director — Acme Corp</div>
+<div style="color:#888;font-size:11px;margin-top:8px;">896 connections</div>
+<div style="color:#00ff66;font-size:12px;margin-top:4px;">✅ REAL PROFILE</div>
+</div>
+<div class="profile-card" style="border-color:#ff4444;">
+<div class="avatar">👤</div>
+<div class="name" style="color:#ff4444;">Sarah Connors</div>
+<div class="role">HR Director — Acme Corp</div>
+<div style="color:#888;font-size:11px;margin-top:8px;">2 connections</div>
+<div style="color:#ff4444;font-size:12px;margin-top:4px;">🚩 FAKE — Impersonator</div>
+</div>
+</div>
+<div style="background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;">
+<p><strong style="color:#ff8800;">Scenario:</strong> The fake profile sends a connection request to employees with a message:</p>
+<div style="background:#111;border-left:4px solid #ff4444;padding:12px;margin:15px 0;font-style:italic;">
+"Hi! I'm updating our employee directory. Could you confirm your full name, department, and personal email for our records? Thanks!"
+</div>
+<p style="color:#888;font-size:13px;">The attacker collects data for a targeted phishing campaign against the company.</p>
+</div>
+<button class="quiz-btn red" onclick="showPhishResult(9,true)">🚩 Social Impersonation</button>
+<button class="quiz-btn green" onclick="showPhishResult(9,false)">✅ Real HR Request</button>
+<div id="result9" class="result-box"></div>
+</div>
+
+</div>
+<footer>Cyber Awareness Lab • Educational Labs • Recognize. Resist. Report.</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ff8800";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+function switchTab(id){
+document.querySelectorAll(".tab-btn").forEach((b,i)=>b.classList.toggle("active",i===id));
+document.querySelectorAll(".lab-content").forEach((c,i)=>c.classList.toggle("active",i===id));
+}
+
+function showPhishResult(labId,isPhish){
+const result=document.getElementById("result"+labId);
+const results=[
+"🔍 Correct! This is a <strong>Phishing Email</strong>. Signs: misspelled domain (amaz0n instead of amazon), urgent language, generic greeting.",
+"❌ This is actually a <strong>Phishing Email</strong>! Check the domain and the .docm attachment (macros).",
+"🔍 Correct! This is a <strong>Whaling Attack</strong>! The CEO's name is spoofed, the email domain is wrong, and it demands urgent wire transfer.",
+"🔍 Correct! This is <strong>Smishing</strong>! Carriers never ask for payment via text with shortened URLs.",
+"🔍 Correct! This is <strong>Vishing</strong>! Microsoft never calls about viruses or asks for remote access.",
+"🔍 Correct! This is <strong>Quishing (QR Code Phishing)</strong>! QR codes can hide malicious URLs.",
+"⚠️ This is a <strong>Fake Login Portal</strong>! The URL contains 'microsoft-login.com' which is NOT Microsoft's real domain.",
+"🔍 Correct! This is a <strong>Tech Support Scam</strong>! Windows Defender never shows phone numbers.",
+"⚠️ You triggered the <strong>USB Drop Attack</strong>! Never plug in unknown USB drives.",
+"🔍 Correct! This is <strong>Social Media Impersonation</strong>! Notice the fake profile has only 2 connections vs 896 on the real one."
+];
+const correct=[
+"🎣 Phishing Email — Correct!",
+"🎯 Spear Phishing — Correct!",
+"🐋 Whaling — Correct!",
+"📱 Smishing — Correct!",
+"📞 Vishing — Correct!",
+"📷 Quishing — Correct!",
+"🔐 Fake Login Portal — Identified!",
+"🛠️ Fake Tech Support — Correct!",
+"💾 USB Drop Attack — Identified!",
+"👤 Social Impersonation — Correct!"
+];
+const wrong=[
+"❌ Incorrect! This IS a phishing email. Look for: misspelled domains, urgency, generic greetings.",
+"❌ Incorrect! This IS spear phishing — the attacker used personal details from LinkedIn.",
+"❌ Incorrect! This IS a whaling attack targeting a CEO for a fraudulent wire transfer.",
+"❌ Incorrect! This IS smishing — never trust unsolicited texts asking for payment.",
+"❌ Incorrect! This IS vishing — Microsoft doesn't make unsolicited security calls.",
+"❌ Incorrect! This IS a quishing attack — QR codes can be tampered with.",
+"❌ Incorrect! This is a fake login portal designed to steal credentials.",
+"❌ Incorrect! This IS a fake tech support popup — a common scam tactic.",
+"❌ Incorrect! This IS a dangerous USB drop attack scenario.",
+"❌ Incorrect! This IS social media impersonation — verify before accepting requests."
+];
+
+if(isPhish){
+result.className="result-box success";
+result.innerHTML="✅ "+correct[labId]+"<br><br>"+results[labId];
+}else{
+result.className="result-box fail";
+result.innerHTML=wrong[labId];
+}
+}
+
+function showLoginWarning(id){
+const w=document.getElementById("loginWarning"+id);
+if(w)w.style.display="block";
+}
+
+function usbClicked(){
+document.getElementById("usbResult").style.display="block";
+}
+</script>
+</body>
+</html>

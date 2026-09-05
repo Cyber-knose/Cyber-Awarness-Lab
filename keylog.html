@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Awareness - Keylogger Simulation</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Consolas,monospace;
+}
+
+body{
+    background:#050505;
+    color:#00ff7f;
+    overflow:hidden;
+}
+
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:-1;
+}
+
+header{
+    text-align:center;
+    padding:20px;
+}
+
+header h1{
+    color:#00ff00;
+    font-size:35px;
+    text-shadow:0 0 15px #00ff00;
+}
+
+.warning{
+    margin:10px auto;
+    width:90%;
+    max-width:1200px;
+    background:#250000;
+    border:2px solid red;
+    color:#ff8080;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+    font-weight:bold;
+}
+
+.container{
+    width:95%;
+    margin:auto;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.panel{
+    background:#111;
+    border:2px solid #00ff66;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 0 15px #00ff44;
+    height:75vh;
+    overflow:hidden;
+}
+
+.panel h2{
+    margin-bottom:15px;
+    color:#00ffcc;
+}
+
+textarea{
+    width:100%;
+    height:250px;
+    background:#000;
+    color:#00ff00;
+    border:2px solid #00ff66;
+    padding:15px;
+    font-size:18px;
+    resize:none;
+}
+
+.console{
+    background:black;
+    height:420px;
+    overflow-y:auto;
+    padding:10px;
+    border:2px solid #00ff55;
+}
+
+.line{
+    margin:3px 0;
+    color:#00ff00;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin-top:15px;
+}
+
+.card{
+    background:#0a0a0a;
+    border:1px solid #00ff66;
+    padding:15px;
+    text-align:center;
+    border-radius:10px;
+}
+
+.card h3{
+    color:#00ffff;
+}
+
+.card span{
+    font-size:22px;
+    color:#00ff00;
+}
+
+.buttons{
+    margin-top:15px;
+}
+
+button{
+    background:#00ff55;
+    color:black;
+    border:none;
+    padding:12px 20px;
+    font-size:16px;
+    cursor:pointer;
+    margin-right:10px;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#00ffaa;
+}
+
+.footer{
+    margin-top:15px;
+    color:#8aff8a;
+    font-size:14px;
+}
+
+::-webkit-scrollbar{
+    width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#00ff66;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<header>
+<h1>⚠ Cyber Awareness - Keylogger Simulation ⚠</h1>
+</header>
+
+<div class="warning">
+This is an educational simulation. It only displays keys typed into the text box below.
+Nothing is stored or transmitted, and no keys outside this page are captured.
+</div>
+
+<div class="container">
+
+<div class="panel">
+
+<h2>Victim Computer</h2>
+
+<textarea id="typingBox"
+placeholder="Type here to see how a keylogger could observe keystrokes within this demo..."></textarea>
+
+<div class="stats">
+
+<div class="card">
+<h3>Total Keys</h3>
+<span id="keys">0</span>
+</div>
+
+<div class="card">
+<h3>Words Per Minute</h3>
+<span id="wpm">0</span>
+</div>
+
+<div class="card">
+<h3>Characters</h3>
+<span id="chars">0</span>
+</div>
+
+<div class="card">
+<h3>Special Keys</h3>
+<span id="special">0</span>
+</div>
+
+</div>
+
+<div class="buttons">
+<button onclick="clearLogs()">Clear Logs</button>
+<button onclick="downloadLogs()">Export Log</button>
+</div>
+
+<div class="footer">
+✔ Safe browser-only demonstration for cybersecurity awareness.
+</div>
+
+</div>
+
+<div class="panel">
+
+<h2>Simulated Attacker Console</h2>
+
+<div class="console" id="console"></div>
+
+</div>
+
+</div>
+
+<script>
+// Matrix background
+const canvas=document.getElementById("matrix");
+const ctx=canvas.getContext("2d");
+
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%^&*";
+const fontSize=16;
+const columns=Math.floor(canvas.width/fontSize);
+
+const drops=[];
+
+for(let i=0;i<columns;i++) drops[i]=1;
+
+function draw(){
+ctx.fillStyle="rgba(0,0,0,0.05)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="#00ff00";
+ctx.font=fontSize+"px monospace";
+
+for(let i=0;i<drops.length;i++){
+
+const text=chars[Math.floor(Math.random()*chars.length)];
+
+ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+
+if(drops[i]*fontSize>canvas.height && Math.random()>0.975)
+drops[i]=0;
+
+drops[i]++;
+
+}
+
+}
+
+setInterval(draw,40);
+
+// Keylogger simulation
+const input=document.getElementById("typingBox");
+const consoleBox=document.getElementById("console");
+
+let keyCount=0;
+let special=0;
+let start=null;
+
+input.addEventListener("keydown",function(e){
+
+if(start===null) start=Date.now();
+
+keyCount++;
+
+document.getElementById("keys").innerText=keyCount;
+
+document.getElementById("chars").innerText=input.value.length+1;
+
+const elapsed=(Date.now()-start)/60000;
+const words=input.value.trim().split(/\s+/).filter(Boolean).length;
+
+document.getElementById("wpm").innerText=
+elapsed>0?Math.round(words/elapsed):0;
+
+let key=e.key;
+
+if(key===" ")
+key="[SPACE]";
+
+if(key==="Enter"){
+key="[ENTER]";
+special++;
+}
+
+if(key==="Backspace"){
+key="[BACKSPACE]";
+special++;
+}
+
+if(key==="Shift"){
+key="[SHIFT]";
+special++;
+}
+
+if(key==="Control"){
+key="[CTRL]";
+special++;
+}
+
+if(key==="Alt"){
+key="[ALT]";
+special++;
+}
+
+document.getElementById("special").innerText=special;
+
+const time=new Date().toLocaleTimeString();
+
+const div=document.createElement("div");
+
+div.className="line";
+
+div.innerHTML=`[${time}] ➜ ${key}`;
+
+consoleBox.appendChild(div);
+
+consoleBox.scrollTop=consoleBox.scrollHeight;
+
+});
+
+function clearLogs(){
+
+consoleBox.innerHTML="";
+
+keyCount=0;
+special=0;
+start=null;
+
+document.getElementById("keys").innerText=0;
+document.getElementById("chars").innerText=0;
+document.getElementById("special").innerText=0;
+document.getElementById("wpm").innerText=0;
+
+input.value="";
+
+}
+
+function downloadLogs(){
+
+const blob=new Blob([consoleBox.innerText],{type:"text/plain"});
+
+const a=document.createElement("a");
+
+a.href=URL.createObjectURL(blob);
+
+a.download="Keylogger_Simulation_Log.txt";
+
+a.click();
+
+}
+</script>
+
+</body>
+</html>

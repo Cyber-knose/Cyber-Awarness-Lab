@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phishing Awareness Trainer</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#111827;
+color:#fff;
+padding:30px;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+h1{
+text-align:center;
+color:#00ff99;
+margin-bottom:10px;
+}
+
+.subtitle{
+text-align:center;
+color:#ccc;
+margin-bottom:30px;
+}
+
+.warning{
+background:#1f2937;
+border-left:5px solid orange;
+padding:15px;
+margin-bottom:25px;
+border-radius:6px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:25px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+}
+
+.card h2{
+margin-bottom:20px;
+}
+
+.safe{
+border:2px solid #00ff99;
+}
+
+.phishing{
+border:2px solid #ff4444;
+}
+
+.address{
+background:#000;
+padding:12px;
+border-radius:6px;
+margin-bottom:20px;
+font-family:monospace;
+word-break:break-all;
+}
+
+.red{
+color:#ff5555;
+font-weight:bold;
+}
+
+.green{
+color:#00ff99;
+font-weight:bold;
+}
+
+.mockup{
+background:#fff;
+color:#000;
+padding:20px;
+border-radius:8px;
+}
+
+.logo{
+font-size:28px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:1px solid #bbb;
+border-radius:6px;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#0078d4;
+color:white;
+border:none;
+border-radius:6px;
+cursor:not-allowed;
+opacity:.6;
+}
+
+.tip{
+margin-top:15px;
+padding:10px;
+background:#18212d;
+border-left:4px solid #00ff99;
+}
+
+ul{
+margin-left:20px;
+margin-top:10px;
+line-height:1.8;
+}
+
+.score{
+margin-top:30px;
+padding:20px;
+background:#1e293b;
+border-radius:10px;
+}
+
+.check{
+display:block;
+margin:10px 0;
+}
+
+.result{
+margin-top:15px;
+font-size:20px;
+color:#00ff99;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎣 Phishing Awareness Trainer</h1>
+
+<p class="subtitle">
+Educational Demonstration Only
+</p>
+
+<div class="warning">
+<strong>Important:</strong> This page is a fictional training exercise. It does not submit or collect any credentials.
+</div>
+
+<div class="grid">
+
+<div class="card safe">
+
+<h2>✅ Example of a Legitimate Site</h2>
+
+<div class="address">
+https://www.bank.example
+</div>
+
+<div class="mockup">
+
+<div class="logo">Example Bank</div>
+
+<p class="green">
+✔ Recognizable domain
+</p>
+
+<p class="green">
+✔ HTTPS shown
+</p>
+
+<p class="green">
+✔ No urgency
+</p>
+
+<p class="green">
+✔ Consistent branding
+</p>
+
+</div>
+
+</div>
+
+<div class="card phishing">
+
+<h2>🚩 Fictional Suspicious Example</h2>
+
+<div class="address">
+https://secure-bank-demo.example/login
+</div>
+
+<div class="mockup">
+
+<div class="logo">
+Example Bank
+</div>
+
+<p class="red">
+⚠ Fictional training page
+</p>
+
+<input type="text" placeholder="Username" disabled>
+
+<input type="password" placeholder="Password" disabled>
+
+<button disabled>
+Disabled (Training Only)
+</button>
+
+<div class="tip">
+
+<strong>Things to Notice:</strong>
+
+<ul>
+
+<li>Urgent message asking you to log in immediately.</li>
+
+<li>Always verify the exact website address.</li>
+
+<li>Be cautious of unexpected emails or links.</li>
+
+<li>Look for spelling mistakes or unusual wording.</li>
+
+<li>Don't trust branding alone—verify the destination.</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="score">
+
+<h2>Quick Quiz</h2>
+
+<label class="check">
+<input type="checkbox" value="1">
+Verify the website address before signing in.
+</label>
+
+<label class="check">
+<input type="checkbox" value="1">
+Treat unexpected urgent messages with caution.
+</label>
+
+<label class="check">
+<input type="checkbox" value="0">
+Log in immediately whenever an email tells you to.
+</label>
+
+<button style="margin-top:20px;cursor:pointer;opacity:1;" onclick="checkQuiz()">
+Check Answers
+</button>
+
+<div class="result" id="result"></div>
+
+</div>
+
+</div>
+
+<script>
+
+function checkQuiz(){
+
+const boxes=document.querySelectorAll("input[type=checkbox]");
+
+let score=0;
+
+boxes.forEach(box=>{
+if(box.checked){
+score+=parseInt(box.value);
+}
+});
+
+document.getElementById("result").innerHTML=
+"You identified "+score+" of 2 safe practices.";
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cryptojacking | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ffdd00;}
+header h1{color:#ffdd00;font-size:34px;text-shadow:0 0 20px #ffdd00;font-family:'Orbitron',sans-serif;}
+header p{color:#ffee88;margin-top:8px;}
+.container{max-width:1000px;margin:30px auto;padding:20px;}
+.card{background:rgba(255,255,255,.05);border:1px solid #ffdd00;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.card h2{color:#ffdd00;margin-bottom:15px;font-family:'Orbitron',sans-serif;}
+.mining-canvas{width:100%;height:280px;background:#0a0a0a;border-radius:12px;border:1px solid #ffdd00;display:block;}
+.controls{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0;}
+.btn{background:#ffdd00;color:#000;border:none;padding:14px 28px;font-weight:bold;border-radius:8px;cursor:pointer;transition:.3s;font-family:'Orbitron',sans-serif;margin:5px;}
+.btn:hover{transform:scale(1.05);box-shadow:0 0 20px #ffdd00;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-reset{background:#00ff66;}
+.btn-red{background:#ff4444;color:#fff;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:15px 0;}
+.stat-box{background:#111;border:1px solid #ffdd00;border-radius:10px;padding:15px;text-align:center;}
+.stat-box h4{color:#ffee88;font-size:13px;margin-bottom:5px;}
+.stat-box span{font-size:24px;font-weight:bold;color:#ffdd00;}
+.meter{height:20px;background:#222;border-radius:15px;overflow:hidden;margin:15px 0;position:relative;}
+.meter-fill{height:100%;background:linear-gradient(90deg,#ffdd00,#ff8800,#ff4444);transition:width .5s;border-radius:15px;}
+.meter-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;font-weight:bold;color:#000;}
+.console{background:#0a0a0a;border:1px solid #ffdd00;border-radius:8px;padding:12px;height:160px;overflow-y:auto;font-family:Consolas,monospace;color:#ffee88;font-size:13px;margin:15px 0;}
+.console .line{margin:3px 0;}
+.console .green{color:#00ff66;}
+.console .yellow{color:#ffaa00;}
+.console .red{color:#ff4444;}
+.coin-display{text-align:center;padding:20px;}
+.coin-display .coin{font-size:64px;}
+.coin-display .amount{font-size:32px;color:#ffdd00;font-weight:bold;}
+.tip-box{background:#0a0a00;border-left:4px solid #00ff66;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ffdd00;color:#ffee88;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>⛏️ Cryptojacking Visualization</h1>
+<p>See how websites silently mine cryptocurrency using your computer's resources</p>
+</header>
+<div class="container">
+<div class="card">
+<h2>💰 Mining Dashboard</h2>
+<div class="coin-display">
+<div class="coin">🪙</div>
+<div class="amount" id="minedAmount">0.00000000 XMR</div>
+<p style="color:#888;font-size:14px;margin-top:5px;">Monero (XMR) mined via browser — all profit goes to attacker</p>
+</div>
+<div class="meter">
+<div class="meter-fill" id="cpuMeter" style="width:8%"></div>
+<div class="meter-label" id="meterLabel">CPU: 8%</div>
+</div>
+<button class="btn" id="mineBtn" onclick="toggleMining()">⛏️ Start Cryptojacking Script</button>
+<button class="btn btn-reset" onclick="resetMining()">🔄 Reset</button>
+</div>
+
+<div class="card">
+<h2>📊 Resource Impact</h2>
+<div class="stats">
+<div class="stat-box"><h4>CPU Usage</h4><span id="cpuStat">8%</span></div>
+<div class="stat-box"><h4>Memory</h4><span id="memStat">256 MB</span></div>
+<div class="stat-box"><h4>Fan Speed</h4><span id="fanStat">Normal</span></div>
+<div class="stat-box"><h4>Battery Drain</h4><span id="batteryStat">Normal</span></div>
+</div>
+<div class="console" id="console"><div class="line green">[WASM] CoinHive script loaded from coinhive.example/lib/miner.js</div></div>
+</div>
+
+<div class="card">
+<h2>🔍 Detection Tools</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+<div style="background:#111;border:1px solid #333;border-radius:8px;padding:15px;text-align:center;">
+<span style="font-size:28px;">🛡️</span>
+<h4 style="color:#ffdd00;margin-top:8px;">Browser Extension</h4>
+<p style="color:#888;font-size:13px;">Use minerBlock or NoCoin to detect scripts</p>
+</div>
+<div style="background:#111;border:1px solid #333;border-radius:8px;padding:15px;text-align:center;">
+<span style="font-size:28px;">🌡️</span>
+<h4 style="color:#ffdd00;margin-top:8px;">Monitor CPU/Fan</h4>
+<p style="color:#888;font-size:13px;">Spike in CPU without legitimate reason</p>
+</div>
+<div style="background:#111;border:1px solid #333;border-radius:8px;padding:15px;text-align:center;">
+<span style="font-size:28px;">🔌</span>
+<h4 style="color:#ffdd00;margin-top:8px;">Disable JavaScript</h4>
+<p style="color:#888;font-size:13px;">Temporarily disable JS on suspicious sites</p>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>🛡️ Protecting Against Cryptojacking</h2>
+<div class="tip-box">
+<ul style="line-height:2.2;margin-left:20px;">
+<li>✔ Cryptojacking scripts run in your browser without consent — draining CPU for mining</li>
+<li>✔ In 2018, websites like ThePirateBay were caught mining via users' browsers</li>
+<li>✔ Use ad-blockers with anti-mining filters (uBlock Origin, NoCoin)</li>
+<li>✔ Monitor CPU usage — sustained 100% CPU on a simple website is a red flag</li>
+<li>✔ Enterprise: block known mining domains (Coinhive, Cryptoloot) via DNS filtering</li>
+<li>✔ Mobile devices are particularly vulnerable — mining destroys battery life</li>
+<li>✔ Some cryptojacking malware runs as persistent processes (e.g., Wannamine)</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Educational Simulation • No actual mining occurs</footer>
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ffdd00";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+const consoleEl=document.getElementById("console");
+const mineBtn=document.getElementById("mineBtn");
+let mining=false,miningInterval=null,hashCount=0;
+let totalMined=0,memUsage=256,cpuUsage=8,fanLevel=0;
+
+function addLog(msg,cls=""){const d=document.createElement("div");d.className="line "+cls;d.textContent=msg;consoleEl.appendChild(d);consoleEl.scrollTop=consoleEl.scrollHeight;}
+
+function formatXMR(amount){
+const str=amount.toString();
+const parts=str.split(".");
+if(!parts[1])return str+".00000000";
+return parts[0]+"."+parts[1].padEnd(8,"0").slice(0,8);
+}
+
+function updateUI(){
+cpuUsage=Math.min(98,8+hashCount*3);
+memUsage=Math.min(2048,256+hashCount*32);
+document.getElementById("cpuStat").textContent=cpuUsage+"%";
+document.getElementById("memStat").textContent=memUsage+" MB";
+document.getElementById("cpuMeter").style.width=cpuUsage+"%";
+document.getElementById("meterLabel").textContent="CPU: "+cpuUsage+"%";
+document.getElementById("minedAmount").textContent=formatXMR(totalMined)+" XMR";
+if(cpuUsage>70){document.getElementById("fanStat").textContent="🔴 HIGH";document.getElementById("batteryStat").textContent="⚠️ Drain";}
+else if(cpuUsage>40){document.getElementById("fanStat").textContent="⚡ Elevated";document.getElementById("batteryStat").textContent="⚠️ Increased";}
+else{document.getElementById("fanStat").textContent="Normal";document.getElementById("batteryStat").textContent="Normal";}
+}
+
+function toggleMining(){
+mining=!mining;
+if(mining){
+mineBtn.textContent="⏹️ Stop Mining Script";
+mineBtn.classList.add("btn-red");
+addLog("[WASM] Starting mining thread with 4 workers...","yellow");
+addLog("[WASM] Mining pool: pool.supportxmr.com:3333","yellow");
+addLog("[WASM] Wallet: 48Y3TkUQVo5vR7Xx... (attacker's wallet)","yellow");
+miningInterval=setInterval(()=>{
+hashCount+=Math.floor(Math.random()*50)+20;
+const mined=(Math.random()*0.0005);
+totalMined+=mined;
+updateUI();
+const t=new Date().toLocaleTimeString();
+addLog(`[MINER] ${t} — Hashrate: ${(hashCount*Math.random()*10+100).toFixed(0)} H/s | +${mined.toFixed(8)} XMR`,"yellow");
+if(hashCount%10===0){
+const alts=["⚠️ System fan spinning up...","⚠️ CPU temperature: 78°C","⚠️ Laptop battery draining faster","⚠️ Other programs running slowly"];
+addLog(alts[Math.floor(Math.random()*alts.length)],"red");
+}
+},2000);
+}else{
+mineBtn.textContent="⛏️ Start Cryptojacking Script";
+mineBtn.classList.remove("btn-red");
+clearInterval(miningInterval);
+addLog("⏸️ Mining paused. CPU returning to normal.","green");
+setTimeout(()=>{cpuUsage=8;memUsage=256;updateUI();},1000);
+}
+}
+
+function resetMining(){
+mining=false;clearInterval(miningInterval);
+mineBtn.textContent="⛏️ Start Cryptojacking Script";
+mineBtn.classList.remove("btn-red");
+hashCount=0;totalMined=0;cpuUsage=8;memUsage=256;
+updateUI();
+consoleEl.innerHTML="<div class='line green'>[WASM] CoinHive script loaded from coinhive.example/lib/miner.js</div>";
+addLog("🔄 Mining simulation reset","green");
+}
+
+updateUI();
+</script>
+</body>
+</html>

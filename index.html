@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Awareness Lab — Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif;}
+html{scroll-behavior:smooth;}
+body{
+background:#07111D;overflow-x:hidden;color:#D8E2EB;
+font-weight:300;line-height:1.8;letter-spacing:0.03em;
+-webkit-font-smoothing:antialiased;
+}
+
+/* ========== BACKGROUND CANVASES (50% OPACITY) ========== */
+canvas.bg-canvas{
+position:fixed;left:0;top:0;width:100%;height:100%;
+z-index:-1;pointer-events:none;
+}
+#matrixCanvas{opacity:0.50;}
+#networkCanvas{opacity:0.50;}
+#globeCanvas{opacity:0.50;}
+
+/* Scanlines */
+.scanlines{
+position:fixed;inset:0;
+background:repeating-linear-gradient(180deg,transparent 0px,transparent 3px,rgba(74,107,138,0.015) 4px);
+animation:scanMove 12s linear infinite;
+opacity:0.4;z-index:-1;pointer-events:none;
+}
+@keyframes scanMove{0%{transform:translateY(0);}100%{transform:translateY(8px);}}
+
+/* Overlay */
+body::after{
+content:'';position:fixed;inset:0;
+background:
+radial-gradient(ellipse at 30% 20%,rgba(74,107,138,0.04),transparent 60%),
+radial-gradient(ellipse at 70% 80%,rgba(90,155,213,0.02),transparent 50%),
+linear-gradient(180deg,rgba(7,17,29,0.1),rgba(7,17,29,0.3));
+z-index:-1;pointer-events:none;
+}
+
+/* ========== HEADER ========== */
+header{
+padding:12px 40px 10px;
+background:rgba(7,17,29,0.88);
+backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
+border-bottom:1px solid rgba(75,107,138,0.18);
+position:sticky;
+top:0;
+z-index:100;
+}
+.header-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+.header-row:first-child{margin-bottom:6px;}
+.logo{
+display:flex;align-items:center;gap:12px;
+}
+.logo-icon{
+width:32px;height:32px;
+border:1.5px solid rgba(75,107,138,0.3);
+border-radius:6px;
+display:flex;align-items:center;justify-content:center;
+font-size:15px;color:#7CB9E8;
+}
+.logo-text{
+font-size:18px;font-weight:500;letter-spacing:0.08em;color:#D8E2EB;
+}
+.logo-text span{
+font-weight:300;color:#4A6B8A;font-size:13px;
+}
+.header-right{
+display:flex;align-items:center;gap:20px;
+}
+.header-time{
+font-family:'Courier New',monospace;
+font-size:12px;color:#4A6B8A;letter-spacing:0.05em;font-weight:400;
+}
+
+.credit-marquee{
+    width:100%;
+    overflow:hidden;
+    white-space:nowrap;
+    position:relative;
+}
+
+.header-credit{
+    display:inline-block;
+    padding-left:100%;
+    font-size:12px;
+    font-weight:400;
+    letter-spacing:0.12em;
+    color:#6A7E90;
+    animation:creditMove 15s linear infinite;
+}
+
+.header-credit strong{
+    color:#7CB9E8;
+    font-weight:500;
+}
+
+@keyframes creditMove{
+    0%{
+        transform:translateX(0);
+    }
+    100%{
+        transform:translateX(-200%);
+    }
+}
+
+/* ========== HERO ========== */
+.hero{
+padding:70px 20px 40px;
+text-align:center;
+position:relative;
+}
+.hero-badge{
+display:inline-block;
+padding:5px 14px;
+border:1px solid rgba(75,107,138,0.15);
+border-radius:3px;
+font-size:10px;font-weight:400;letter-spacing:0.12em;
+color:#7CB9E8;text-transform:uppercase;
+margin-bottom:16px;
+background:rgba(74,107,138,0.04);
+}
+.hero h1{
+font-size:40px;font-weight:500;letter-spacing:0.04em;
+color:#E4EBF0;line-height:1.2;margin-bottom:10px;
+}
+.hero h1 span{color:#7CB9E8;font-weight:400;}
+.hero p{
+margin:0 auto;max-width:720px;
+font-size:14px;font-weight:300;color:#8A9BA8;
+line-height:1.9;letter-spacing:0.03em;margin-bottom:20px;
+}
+/* ========== SECTION TITLE ========== */
+.section-title{
+text-align:center;padding:20px 20px 10px;
+}
+.section-title h2{
+font-size:22px;font-weight:500;letter-spacing:0.08em;color:#D8E2EB;margin-bottom:4px;
+}
+.section-title p{
+font-size:11px;color:#4A6B8A;letter-spacing:0.1em;font-weight:400;text-transform:uppercase;
+}
+
+/* ========== CARDS GRID ========== */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+gap:18px;
+padding:20px 40px 50px;
+max-width:1320px;
+margin:0 auto;
+}
+.card{
+position:relative;
+border-radius:8px;
+background:rgba(255,255,255,0.02);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+border:1px solid rgba(75,107,138,0.08);
+padding:22px 20px;
+transition:all 0.35s ease;
+overflow:hidden;
+}
+.card:hover{
+transform:translateY(-5px);
+border-color:rgba(75,107,138,0.18);
+box-shadow:0 6px 24px rgba(0,0,0,0.15);
+}
+.card-icon{
+width:30px;height:30px;
+border:1px solid rgba(75,107,138,0.12);
+border-radius:5px;
+display:flex;align-items:center;justify-content:center;
+font-size:14px;color:#7CB9E8;
+background:rgba(74,107,138,0.03);
+margin-bottom:12px;
+}
+.card h2{
+font-size:15px;font-weight:500;color:#D8E2EB;
+letter-spacing:0.04em;margin-bottom:10px;line-height:1.3;
+}
+.card p{
+font-size:12px;font-weight:300;color:#8A9BA8;
+line-height:1.7;letter-spacing:0.02em;margin-bottom:16px;
+}
+.card a{
+display:inline-flex;align-items:center;gap:6px;
+padding:8px 16px;border-radius:4px;
+border:1px solid rgba(75,107,138,0.15);
+background:rgba(74,107,138,0.04);
+color:#A0B4C6;
+font-size:11px;font-weight:400;letter-spacing:0.06em;text-transform:uppercase;
+text-decoration:none;transition:all 0.25s;
+font-family:'Inter',sans-serif;
+}
+.card a:hover{
+background:rgba(74,107,138,0.1);
+border-color:rgba(75,107,138,0.25);
+color:#D8E2EB;
+}
+.card a .arrow{
+font-size:13px;transition:transform 0.25s;color:#4A6B8A;
+}
+.card a:hover .arrow{transform:translateX(3px);}
+
+/* ========== FOOTER ========== */
+footer{
+padding:36px 40px 28px;text-align:center;
+border-top:1px solid rgba(75,107,138,0.08);margin-top:10px;
+}
+.footer-brand{
+font-size:16px;font-weight:500;letter-spacing:0.1em;color:#D8E2EB;margin-bottom:4px;
+}
+.footer-brand span{font-weight:300;color:#4A6B8A;font-size:12px;}
+.footer-text{
+font-size:11px;color:#6A7E90;max-width:600px;
+margin:0 auto 14px;font-weight:300;line-height:1.8;
+}
+.footer-bottom{
+font-size:10px;font-weight:400;color:#4A6B8A;
+letter-spacing:0.08em;padding-top:14px;
+border-top:1px solid rgba(75,107,138,0.05);
+}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:768px){
+header{padding:14px 20px;flex-wrap:wrap;gap:10px;}
+.header-row{flex-wrap:wrap;gap:6px;}
+.header-right{gap:12px;flex-wrap:wrap;}
+.hero h1{font-size:26px;}
+.grid{padding:20px;grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+.logo-text{font-size:15px;}
+.logo-text span{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== BACKGROUND CANVASES ========== -->
+<canvas id="matrixCanvas" class="bg-canvas"></canvas>
+<canvas id="networkCanvas" class="bg-canvas"></canvas>
+<canvas id="globeCanvas" class="bg-canvas"></canvas>
+<div class="scanlines"></div>
+
+<!-- ========== HEADER ========== -->
+<header>
+<div class="header-row">
+<div class="logo">
+<div class="logo-icon">🛡</div>
+<div class="logo-text">Cyber Awareness Lab <span>— Command Center</span></div>
+</div>
+<div class="header-right">
+<div class="header-time" id="istClock">00:00:00 IST</div>
+</div>
+</div>
+<div class="header-row">
+    <div class="credit-marquee">
+        <div class="header-credit">
+            🛡 Created by <strong>Priyanshu Jangra</strong> • Cyber Awareness Lab • Educational Purpose Only •
+        </div>
+    </div>
+</div>
+</header>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+<div class="hero-badge">Cyber Awareness &amp; Defense Command</div>
+<h1>Think Before You Click.<br><span>Interactive Security Training</span></h1>
+<p>
+Explore interactive cybersecurity awareness modules designed for professionals,
+analysts, and defenders. Each module delivers browser-based training in a secure
+educational environment — no data collected, no malware executed.
+</p>
+</section>
+
+<!-- ========== SECTION TITLE ========== -->
+<div class="section-title">
+<h2>Modules</h2>
+<p>Select a module to begin training</p>
+</div>
+
+<!-- ========== MODULES GRID ========== -->
+<section class="grid">
+
+<div class="card">
+<div class="card-icon">🔒</div>
+<h2>Ransomware Simulator</h2>
+<p>Visualize how ransomware encrypts files, locks systems, and demands payment through a safe educational simulation.</p>
+<a href="ransomware-simulator.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🐴</div>
+<h2>Trojan Demonstration</h2>
+<p>Learn how trojans disguise as trusted software and silently compromise computer systems.</p>
+<a href="trojan-demo.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🪱</div>
+<h2>Worm Propagation</h2>
+<p>Understand how worms automatically spread across vulnerable devices without human interaction.</p>
+<a href="worm-propagation.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">👁</div>
+<h2>Spyware Behavior</h2>
+<p>See how spyware secretly monitors users, collects information, and invades privacy.</p>
+<a href="spyware-behavior.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">⌨</div>
+<h2>Keylogger Visualization</h2>
+<p>Demonstrates how keystrokes are captured and why secure authentication practices are critical.</p>
+<a href="keylog.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🕳</div>
+<h2>Rootkit Concept</h2>
+<p>Understand how rootkits hide malicious activities and remain invisible inside operating systems.</p>
+<a href="rootkit-demo.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">📢</div>
+<h2>Adware Demonstration</h2>
+<p>Observe how unwanted software injects advertisements, changes browser settings, and degrades user experience.</p>
+<a href="adware-demo.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🧠</div>
+<h2>Fileless Malware</h2>
+<p>Learn how advanced malware executes directly in memory, making detection significantly more difficult.</p>
+<a href="fileless-malware.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🌐</div>
+<h2>Botnet Simulation</h2>
+<p>Visualize infected devices communicating with a command and control infrastructure in a safe simulation.</p>
+<a href="botnet-simulation.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">⛏</div>
+<h2>Cryptojacking</h2>
+<p>See how unauthorized cryptocurrency mining silently consumes CPU resources and reduces system performance.</p>
+<a href="cryptojacking.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🛡</div>
+<h2>SOC Dashboard</h2>
+<p>Experience a simulated Security Operations Center with live alerts, incidents, threat feeds, and investigations.</p>
+<a href="soc-dashboard.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">📧</div>
+<h2>Social Engineering</h2>
+<p>Practice identifying phishing, vishing, smishing, quishing, and modern social engineering attacks.</p>
+<a href="social-engineering.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🤖</div>
+<h2>AI Threat Awareness</h2>
+<p>Explore deepfakes, AI-powered phishing, prompt injection, voice cloning, and emerging AI cyber threats.</p>
+<a href="ai-threats.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🔐</div>
+<h2>Password Security Lab</h2>
+<p>Understand password entropy, brute-force attacks, dictionary attacks, and password best practices.</p>
+<a href="password-security.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🌍</div>
+<h2>Browser Privacy Lab</h2>
+<p>Discover cookies, browser fingerprinting, trackers, third-party scripts, and online privacy techniques.</p>
+<a href="browser-privacy.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🚨</div>
+<h2>Incident Response Simulator</h2>
+<p>Walk through identification, containment, eradication, and recovery phases of a cyber incident.</p>
+<a href="incident-response.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🔍</div>
+<h2>Phishing Forensics</h2>
+<p>Analyze phishing emails, inspect headers, identify malicious links, and understand email-based threat indicators.</p>
+<a href="phishing-awarness.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+  <!-- ===== NEW NETWORK SECURITY MODULES ===== -->
+
+<div class="card">
+<div class="card-icon">📡</div>
+<h2>Evil Twin Wi-Fi Attack</h2>
+<p>Simulates a rogue Wi-Fi access point that intercepts traffic from unsuspecting users connecting to fake networks.</p>
+<a href="evil-twin.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">📶</div>
+<h2>Rogue Access Point</h2>
+<p>Understand how unauthorized access points bypass network security controls and enable lateral movement.</p>
+<a href="rogue-ap.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🌐</div>
+<h2>DNS Spoofing Simulator</h2>
+<p>See how DNS cache poisoning redirects legitimate traffic to malicious sites without user knowledge.</p>
+<a href="dns-spoofing.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🔗</div>
+<h2>ARP Poisoning</h2>
+<p>Visualize how ARP cache poisoning enables man-in-the-middle attacks on local network segments.</p>
+<a href="arp-poisoning.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🕸️</div>
+<h2>MITM Attack Demo</h2>
+<p>Interactive demonstration of how attackers intercept and modify communications between two parties.</p>
+<a href="mitm-demo.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🕳️</div>
+<h2>Watering Hole Attack</h2>
+<p>Learn how attackers compromise trusted websites frequented by target groups to deliver malware.</p>
+<a href="watering-hole.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">⛓️</div>
+<h2>Supply Chain Attack</h2>
+<p>See how compromising a third-party vendor cascades into a full breach of the primary target organization.</p>
+<a href="supply-chain.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">📱</div>
+<h2>SIM Swap Attack</h2>
+<p>Understand how attackers hijack phone numbers to bypass SMS-based two-factor authentication.</p>
+<a href="sim-swap.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🍪</div>
+<h2>Session Hijacking</h2>
+<p>Learn how stolen session tokens allow attackers to impersonate authenticated users without credentials.</p>
+<a href="session-hijacking.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🔑</div>
+<h2>Credential Stuffing</h2>
+<p>See how attackers use leaked credentials from data breaches to break into accounts across services.</p>
+<a href="credential-stuffing.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🔔</div>
+<h2>MFA Fatigue Attack</h2>
+<p>Experience how attackers overwhelm users with push notifications to accidentally approve access.</p>
+<a href="mfa-fatigue.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🥠</div>
+<h2>Cookie Theft Simulation</h2>
+<p>Visualize how session cookies are stolen via XSS and replayed to hijack authenticated web sessions.</p>
+<a href="cookie-theft.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">🔐</div>
+<h2>OAuth Permission Abuse</h2>
+<p>Demonstrates how malicious apps abuse OAuth scopes to access sensitive user data without consent.</p>
+<a href="oauth-abuse.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+<div class="card">
+<div class="card-icon">⚔️</div>
+<h2>Cyber Yodha — Red Team Platform</h2>
+<p>Professional Red Team / Purple Team engagement platform — adversary emulation, MITRE ATT&CK mapping, detection engineering (Sigma/YARA/SIEM), and report generation.</p>
+<a href="../Cyber-Yodha/index.html">Launch Module <span class="arrow">→</span></a>
+</div>
+
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+<div class="footer-brand">Cyber Awareness Lab <span>— Command Center</span></div>
+<div class="footer-text">
+Interactive cybersecurity awareness demonstrations for professionals, students, and organizations.
+All modules are browser-based simulations intended solely for education and training.
+</div>
+<div class="footer-bottom">
+© 2026 Cyber Awareness Lab · Created by Priyanshu Jangra
+</div>
+</footer>
+
+<script>
+/* ========== IST CLOCK ========== */
+function updateISTClock(){
+const now=new Date();
+const opts={timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false};
+document.getElementById('istClock').textContent = now.toLocaleTimeString('en-IN',opts) + ' IST';
+}
+updateISTClock();
+setInterval(updateISTClock, 1000);
+
+/* ========== MATRIX RAIN (50% OPACITY) ========== */
+(function(){
+const canvas=document.getElementById('matrixCanvas');
+const ctx=canvas.getContext('2d');
+let w,h,cols,drops=[];
+function resize(){
+w=canvas.width=window.innerWidth;
+h=canvas.height=window.innerHeight;
+cols=Math.floor(w/14);
+drops=[];
+for(let i=0;i<cols;i++) drops.push(Math.floor(Math.random()*h/14));
+}
+resize();
+window.addEventListener('resize',resize);
+const chars='0123456789ABCDEF';
+function draw(){
+ctx.fillStyle='rgba(7,17,29,0.04)';
+ctx.fillRect(0,0,w,h);
+ctx.fillStyle='rgba(74,107,138,0.35)';
+ctx.font='14px monospace';
+for(let i=0;i<drops.length;i++){
+const char=chars[Math.floor(Math.random()*chars.length)];
+const x=i*14, y=drops[i]*14;
+ctx.fillText(char,x,y);
+if(y>h && Math.random()>0.98) drops[i]=0;
+drops[i]++;
+}
+}
+setInterval(draw,45);
+})();
+
+/* ========== NETWORK NODES ========== */
+(function(){
+const canvas=document.getElementById('networkCanvas');
+const ctx=canvas.getContext('2d');
+let w,h;
+function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
+resize();
+window.addEventListener('resize',resize);
+const nodes=[];
+for(let i=0;i<45;i++){
+nodes.push({
+x:Math.random()*w,y:Math.random()*h,
+vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,
+r:1.5+Math.random()*2
+});
+}
+function animate(){
+ctx.clearRect(0,0,w,h);
+for(const n of nodes){
+n.x+=n.vx;n.y+=n.vy;
+if(n.x<0||n.x>w)n.vx*=-1;
+if(n.y<0||n.y>h)n.vy*=-1;
+ctx.beginPath();
+ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+ctx.fillStyle='rgba(90,155,213,0.45)';
+ctx.fill();
+}
+for(let i=0;i<nodes.length;i++){
+for(let j=i+1;j<nodes.length;j++){
+const dx=nodes[i].x-nodes[j].x;
+const dy=nodes[i].y-nodes[j].y;
+const d=Math.sqrt(dx*dx+dy*dy);
+if(d<120){
+const a=1-(d/120);
+ctx.beginPath();
+ctx.moveTo(nodes[i].x,nodes[i].y);
+ctx.lineTo(nodes[j].x,nodes[j].y);
+ctx.strokeStyle=`rgba(74,107,138,${a*0.25})`;
+ctx.lineWidth=0.8;
+ctx.stroke();
+}
+}
+}
+requestAnimationFrame(animate);
+}
+animate();
+})();
+
+/* ========== 3D GLOBE ========== */
+(function(){
+const canvas=document.getElementById('globeCanvas');
+const ctx=canvas.getContext('2d');
+let w,h;
+function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
+resize();
+window.addEventListener('resize',resize);
+let angle=0;
+const cx=()=>w*0.5, cy=()=>h*0.5;
+const R=()=>Math.min(w,h)*0.22;
+
+function draw(){
+ctx.clearRect(0,0,w,h);
+const r=R(), cx_=cx(), cy_=cy();
+if(r<20){requestAnimationFrame(draw);return;}
+// Outer ring
+ctx.beginPath();
+ctx.arc(cx_,cy_,r,0,Math.PI*2);
+ctx.strokeStyle='rgba(74,107,138,0.15)';
+ctx.lineWidth=1.5;
+ctx.stroke();
+// Lat lines
+for(let lat=-60;lat<=60;lat+=30){
+const latR=r*Math.cos(lat*Math.PI/180);
+const yOff=r*Math.sin(lat*Math.PI/180);
+ctx.beginPath();
+ctx.ellipse(cx_,cy_+yOff,latR,Math.abs(latR)*0.15,0,0,Math.PI*2);
+ctx.strokeStyle='rgba(74,107,138,0.10)';
+ctx.lineWidth=0.8;
+ctx.stroke();
+}
+// Lon lines
+const lonCount=6;
+for(let i=0;i<lonCount;i++){
+const lonAngle=(i/lonCount)*Math.PI*2+angle;
+const xOff=r*Math.cos(lonAngle);
+const zOff=r*Math.sin(lonAngle);
+if(zOff>0){
+ctx.beginPath();
+ctx.ellipse(cx_,cy_,Math.abs(xOff),r,0,Math.PI*2*0.5);
+ctx.strokeStyle=`rgba(74,107,138,${0.06+0.03*Math.abs(zOff)/r})`;
+ctx.lineWidth=0.8;
+ctx.stroke();
+}
+}
+// Connection points
+const pts=[
+{lat:0,lon:0},{lat:35,lon:65},{lat:-25,lon:130},
+{lat:45,lon:185},{lat:-35,lon:245},{lat:15,lon:310},
+{lat:50,lon:45},{lat:-15,lon:90},{lat:30,lon:270}
+];
+for(const p of pts){
+const lonRad=(p.lon*Math.PI/180)+angle;
+const latRad=p.lat*Math.PI/180;
+const x=cx_+r*Math.cos(latRad)*Math.sin(lonRad);
+const y=cy_-r*Math.sin(latRad);
+const z=Math.cos(latRad)*Math.cos(lonRad);
+if(z>0){
+ctx.beginPath();
+ctx.arc(x,y,2,0,Math.PI*2);
+ctx.fillStyle='rgba(90,155,213,0.25)';
+ctx.fill();
+}
+}
+angle+=0.004;
+requestAnimationFrame(draw);
+}
+draw();
+})();
+
+/* ========== FADE-IN ON SCROLL ========== */
+const observer=new IntersectionObserver(entries=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+entry.target.style.opacity='1';
+entry.target.style.transform='translateY(0)';
+}
+});
+},{threshold:0.1});
+document.querySelectorAll('.card').forEach(el=>{
+el.style.opacity='0';
+el.style.transform='translateY(18px)';
+el.style.transition='opacity 0.6s ease, transform 0.6s ease';
+observer.observe(el);
+});
+
+console.log('%cCyber Awareness Lab — Command Center', 'color:#7CB9E8;font-size:14px;font-weight:500;');
+console.log('%cCreated by Priyanshu Jangra', 'color:#4A6B8A;font-size:12px;');
+</script>
+</body>
+</html>
+

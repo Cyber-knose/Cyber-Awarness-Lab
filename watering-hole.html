@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watering Hole Attack | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #00cc44;}
+header h1{color:#00cc44;font-size:34px;text-shadow:0 0 20px #00cc44;}
+header p{color:#88ffaa;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #00cc44;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#00cc44;margin-bottom:15px;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.website-card{background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;cursor:pointer;transition:.3s;}
+.website-card:hover{border-color:#00cc44;}
+.website-card .site-header{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.website-card .site-header .favicon{font-size:28px;}
+.website-card .site-header .site-name{font-weight:bold;color:#fff;}
+.website-card .site-header .site-url{color:#888;font-size:12px;}
+.website-card .badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;margin-top:2px;}
+.website-card .badge.safe{background:#002a00;color:#00ff66;border:1px solid #00ff66;}
+.website-card .badge.infected{background:#2a0000;color:#ff4444;border:1px solid #ff4444;}
+
+.visit-log{background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin:15px 0;font-family:Consolas,monospace;font-size:12px;min-height:120px;max-height:200px;overflow-y:auto;}
+.visit-line{color:#888;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.02);}
+.visit-line.alert{color:#ff4444;}
+.visit-line.safe{color:#00ff66;}
+
+.btn{background:#00cc44;color:#000;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #00cc44;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+
+.tip-box{background:#001a0a;border-left:4px solid #00cc44;padding:15px;margin:15px 0;line-height:1.8;}
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:15px 0;}
+.profile-card{background:#111;border:1px solid #333;border-radius:10px;padding:15px;text-align:center;}
+.profile-card .avatar{font-size:36px;}
+.profile-card .name{color:#00cc44;font-weight:bold;margin-top:5px;}
+.profile-card .role{color:#888;font-size:12px;}
+.profile-card .status{font-size:11px;margin-top:5px;padding:3px;border-radius:4px;}
+.profile-card .status.infected{background:#2a0000;color:#ff4444;}
+footer{padding:25px;text-align:center;border-top:1px solid #00cc44;color:#88ffaa;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>🕳️ Watering Hole Attack Lab</h1>
+<p>Understand how attackers compromise trusted websites to target specific groups</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>🕳️ Watering Hole Attack Simulation</h2>
+<p class="desc">A watering hole attack compromises websites frequently visited by a target group. The attacker injects malicious code that delivers malware or phishing pages to visitors, exploiting the trust in legitimate sites.</p>
+
+<h3 style="color:#00cc44;margin:20px 0 10px;">🎯 Target: Cybersecurity Professionals at DEFCON Corp</h3>
+<div class="profile-grid">
+<div class="profile-card"><div class="avatar">👤</div><div class="name">Dr. Sarah Chen</div><div class="role">CISO — DEFCON Corp</div></div>
+<div class="profile-card"><div class="avatar">👤</div><div class="name">Mike Johnson</div><div class="role">Security Engineer</div></div>
+<div class="profile-card"><div class="avatar">👤</div><div class="name">Priya Patel</div><div class="role">Network Admin</div></div>
+<div class="profile-card"><div class="avatar">👤</div><div class="name">Alex Rivera</div><div class="role">SOC Analyst</div></div>
+</div>
+
+<h3 style="color:#00cc44;margin:20px 0 10px;">🌐 Frequently Visited Sites (Research shows):</h3>
+<div class="website-card" onclick="visitSite(this, 0)">
+<div class="site-header">
+<span class="favicon">📰</span>
+<div><div class="site-name">SecurityNewsDaily.com</div><div class="site-url">https://www.securitynewsdaily.com</div></div>
+<span class="badge safe" id="badge0">✅ Safe</span>
+</div>
+<p style="color:#aaa;font-size:13px;">Top cybersecurity news site — visited daily by 73% of DEFCON Corp employees</p>
+</div>
+
+<div class="website-card" onclick="visitSite(this, 1)">
+<div class="site-header">
+<span class="favicon">💻</span>
+<div><div class="site-name">StackOverflow for Security</div><div class="site-url">https://security.stackoverflow.com</div></div>
+<span class="badge safe" id="badge1">✅ Safe</span>
+</div>
+<p style="color:#aaa;font-size:13px;">Popular Q&A site for security professionals — 68% weekly usage</p>
+</div>
+
+<div class="website-card" onclick="visitSite(this, 2)">
+<div class="site-header">
+<span class="favicon">📅</span>
+<div><div class="site-name">CyberCon 2024 Registration</div><div class="site-url">https://www.cybercon2024.com/register</div></div>
+<span class="badge safe" id="badge2">✅ Safe</span>
+</div>
+<p style="color:#aaa;font-size:13px;">Upcoming industry conference — 42% of employees registered</p>
+</div>
+
+<button class="btn danger" onclick="deployWateringHole()">⚠️ Deploy Watering Hole Attack</button>
+
+<div class="visit-log" id="visitLog">
+<div class="visit-line safe">🔍 Web traffic monitoring active...</div>
+<div class="visit-line safe">✅ All visited sites are clean</div>
+</div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ Defense</h2>
+<div class="tip-box">
+<strong>🛡️ How to Protect Against Watering Hole Attacks:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔐 Use browser isolation technology (e.g., remote browsing)</li>
+<li>🔐 Keep browsers and plugins updated to patch vulnerabilities</li>
+<li>🔐 Deploy web filtering and threat intelligence feeds</li>
+<li>🔐 Use endpoint detection and response (EDR) solutions</li>
+<li>🔐 Implement Content Security Policy (CSP) headers</li>
+<li>🔐 Use web application firewalls (WAF) on corporate sites</li>
+<li>🔐 Train employees to use separate browsers for work/personal</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#00cc44";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let attackDeployed = false;
+let visitCount = 0;
+
+function visitSite(el, id){
+const badge = document.getElementById('badge' + id);
+const log = document.getElementById('visitLog');
+
+if(attackDeployed){
+badge.className = 'badge infected';
+badge.innerHTML = '⚠️ Compromised';
+badge.style.background = '#2a0000';
+badge.style.color = '#ff4444';
+badge.style.borderColor = '#ff4444';
+
+const line = document.createElement('div');
+line.className = 'visit-line alert';
+const alerts = [
+'🚨 [ALERT] Watering hole triggered! Malicious JS injected via compromised ad server',
+'🔓 [Payload] CVE-2024-xxxx exploit delivered — browser memory dump initiated',
+'💀 [Malware] Troj/Agent-BCX downloaded through drive-by download',
+'🔓 [Exfil] Corporate credentials and session tokens sent to C2 server at 185.xxx.xxx.xxx'
+];
+line.textContent = alerts[Math.min(visitCount, alerts.length-1)];
+log.appendChild(line);
+log.scrollTop = log.scrollHeight;
+visitCount++;
+} else {
+const line = document.createElement('div');
+line.className = 'visit-line safe';
+line.textContent = '✅ Visited ' + el.querySelector('.site-name').textContent + ' — site is clean and secure';
+log.appendChild(line);
+log.scrollTop = log.scrollHeight;
+}
+}
+
+function deployWateringHole(){
+if(attackDeployed) return;
+attackDeployed = true;
+
+const log = document.getElementById('visitLog');
+log.innerHTML = '<div class="visit-line alert">⚠️ [Attacker] Compromising trusted websites...</div>';
+
+const steps = [
+'⚠️ [Attacker] Exploiting vulnerability in popular ad network used by all 3 sites',
+'⚠️ [Attacker] Injecting malicious JavaScript into page footer (hidden iframe)',
+'⚠️ [Payload] Delivering CVE-2024-xxxx — browser exploit for Chrome 120+',
+'⚠️ [C2] Beaconing to command & control server at 198.51.100.55:443',
+'💀 [COMPLETE] Watering hole active — 3 trusted sites now weaponized',
+'💀 Any DEFCON Corp employee visiting these sites will be compromised'
+];
+
+let step = 0;
+const interval = setInterval(() => {
+if(step >= steps.length){ clearInterval(interval); return; }
+const line = document.createElement('div');
+line.className = 'visit-line alert';
+line.textContent = steps[step];
+log.appendChild(line);
+log.scrollTop = log.scrollHeight;
+step++;
+}, 1000);
+}
+</script>
+</body>
+</html>

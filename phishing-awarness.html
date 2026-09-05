@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phishing Awareness Trainer</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Orbitron',sans-serif;
+}
+
+body{
+background:#050505;
+color:#ffffff;
+overflow-x:hidden;
+}
+
+canvas{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+z-index:-1;
+}
+
+header{
+
+padding:25px;
+text-align:center;
+background:rgba(0,0,0,.4);
+backdrop-filter:blur(8px);
+border-bottom:1px solid #00ff66;
+
+}
+
+header h1{
+
+color:#00ff66;
+font-size:38px;
+text-shadow:0 0 20px #00ff66;
+
+}
+
+header p{
+
+margin-top:10px;
+color:#b6ffd8;
+
+}
+
+.container{
+
+width:95%;
+max-width:1400px;
+margin:auto;
+padding:30px;
+
+}
+
+.card{
+
+background:rgba(255,255,255,.05);
+border:1px solid #00ff66;
+border-radius:15px;
+padding:25px;
+margin-bottom:25px;
+backdrop-filter:blur(10px);
+
+}
+
+.card h2{
+
+color:#00ff66;
+margin-bottom:15px;
+
+}
+
+.email{
+
+background:#0a0a0a;
+padding:20px;
+border-radius:10px;
+border:1px solid #00ff66;
+line-height:1.9;
+
+}
+
+.highlight{
+
+color:#ff4444;
+font-weight:bold;
+cursor:pointer;
+
+}
+
+.safe{
+
+color:#00ff99;
+font-weight:bold;
+
+}
+
+.urlbox{
+
+background:black;
+padding:18px;
+border-radius:10px;
+font-size:18px;
+word-break:break-all;
+border:1px solid #00ffff;
+
+}
+
+button{
+
+padding:12px 20px;
+background:#00ff66;
+border:none;
+font-size:16px;
+font-weight:bold;
+border-radius:8px;
+cursor:pointer;
+margin-top:15px;
+
+}
+
+button:hover{
+
+background:#00ffaa;
+
+}
+
+#analysis{
+
+margin-top:20px;
+display:none;
+
+}
+
+.quiz{
+
+display:grid;
+gap:20px;
+
+}
+
+.question{
+
+padding:15px;
+background:#0d0d0d;
+border-radius:10px;
+border:1px solid #00ff66;
+
+}
+
+.question p{
+
+margin-bottom:12px;
+
+}
+
+.option{
+
+display:block;
+margin:8px 0;
+
+}
+
+.score{
+
+font-size:24px;
+text-align:center;
+color:#00ff66;
+margin-top:20px;
+
+}
+
+footer{
+
+padding:25px;
+text-align:center;
+color:#7effb4;
+border-top:1px solid #00ff66;
+
+}
+
+.tip{
+
+padding:15px;
+margin-top:10px;
+background:#102010;
+border-left:4px solid #00ff66;
+
+}
+
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<header>
+
+<h1>🎣 Phishing Awareness Trainer</h1>
+
+<p>Interactive educational module for recognizing phishing attempts.</p>
+
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Exercise 1 : Inspect This Email</h2>
+
+<div class="email">
+
+<b>From:</b> security-update@micr0soft-support.example<br>
+
+<b>Subject:</b>
+<span class="highlight"
+title="Attackers often create urgency.">
+URGENT : Verify your account immediately!
+</span>
+
+<br><br>
+
+Dear User,
+
+<br><br>
+
+Your account will be suspended within
+<span class="highlight"
+title="Urgency is a common phishing tactic.">
+24 hours
+</span>
+
+unless you verify your identity.
+
+<br><br>
+
+Please review your account using the official portal.
+
+<br><br>
+
+<span class="safe">
+✔ Training Tip:
+Hover over highlighted text to learn why it is suspicious.
+</span>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Exercise 2 : URL Inspection</h2>
+
+<div class="urlbox">
+
+https://secure-update-login.example/login
+
+</div>
+
+<button onclick="analyzeURL()">
+
+Analyze URL
+
+</button>
+
+<div id="analysis">
+
+<div class="tip">
+
+<b>Things to verify:</b>
+
+<ul>
+
+<li>Is the domain exactly the one you expect?</li>
+
+<li>Is HTTPS present?</li>
+
+<li>Are there unnecessary subdomains?</li>
+
+<li>Did you arrive here from an unexpected email?</li>
+
+<li>Never trust urgency alone.</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Exercise 3 : Quick Quiz</h2>
+
+<div class="quiz">
+
+<div class="question">
+
+<p>1. Which is a common phishing warning sign?</p>
+
+<label class="option">
+<input type="radio" name="q1" value="1">
+Unexpected urgency
+</label>
+
+<label class="option">
+<input type="radio" name="q1" value="0">
+Company logo
+</label>
+
+<label class="option">
+<input type="radio" name="q1" value="0">
+Dark mode website
+</label>
+
+</div>
+
+<div class="question">
+
+<p>2. Before clicking a link you should:</p>
+
+<label class="option">
+<input type="radio" name="q2" value="1">
+Verify the domain
+</label>
+
+<label class="option">
+<input type="radio" name="q2" value="0">
+Ignore HTTPS
+</label>
+
+<label class="option">
+<input type="radio" name="q2" value="0">
+Disable browser protection
+</label>
+
+</div>
+
+<div class="question">
+
+<p>3. Multi-factor authentication helps:</p>
+
+<label class="option">
+<input type="radio" name="q3" value="1">
+Reduce account takeover risk
+</label>
+
+<label class="option">
+<input type="radio" name="q3" value="0">
+Speed up phishing
+</label>
+
+<label class="option">
+<input type="radio" name="q3" value="0">
+Hide browser history
+</label>
+
+</div>
+
+<button onclick="checkQuiz()">
+
+Submit Quiz
+
+</button>
+
+<div id="score" class="score"></div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Best Practices</h2>
+
+<ul style="line-height:2;">
+
+<li>✔ Verify the website domain carefully.</li>
+
+<li>✔ Use multi-factor authentication.</li>
+
+<li>✔ Keep software updated.</li>
+
+<li>✔ Do not click unexpected links.</li>
+
+<li>✔ Report suspicious emails.</li>
+
+<li>✔ Be cautious with urgent requests.</li>
+
+<li>✔ Verify attachments before opening.</li>
+
+</ul>
+
+</div>
+
+</div>
+
+<footer>
+
+Cyber Awareness Lab • Educational Demonstration Only
+
+</footer>
+
+<script>
+
+function analyzeURL(){
+
+document.getElementById("analysis").style.display="block";
+
+}
+
+function checkQuiz(){
+
+let score=0;
+
+["q1","q2","q3"].forEach(q=>{
+
+let ans=document.querySelector("input[name='"+q+"']:checked");
+
+if(ans) score+=parseInt(ans.value);
+
+});
+
+document.getElementById("score").innerHTML=
+"Your Score : "+score+" / 3";
+
+}
+
+const canvas=document.getElementById("matrix");
+const ctx=canvas.getContext("2d");
+
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+const letters="01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const size=16;
+const columns=Math.floor(canvas.width/size);
+
+const drops=[];
+
+for(let i=0;i<columns;i++)
+drops[i]=1;
+
+function draw(){
+
+ctx.fillStyle="rgba(0,0,0,.05)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="#00ff66";
+ctx.font=size+"px monospace";
+
+for(let i=0;i<drops.length;i++){
+
+let text=letters[Math.floor(Math.random()*letters.length)];
+
+ctx.fillText(text,i*size,drops[i]*size);
+
+if(drops[i]*size>canvas.height && Math.random()>0.98){
+
+drops[i]=0;
+
+}
+
+drops[i]++;
+
+}
+
+}
+
+setInterval(draw,35);
+
+window.onresize=function(){
+
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+};
+
+</script>
+
+</body>
+</html>

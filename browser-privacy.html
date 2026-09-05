@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browser Privacy Lab | Cyber Awareness Lab</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Orbitron',sans-serif;
+}
+
+body{
+background:#050505;
+color:#fff;
+overflow-x:hidden;
+}
+
+header{
+padding:20px;
+text-align:center;
+background:#081010;
+border-bottom:1px solid #00ff66;
+}
+
+header h1{
+color:#00ff66;
+text-shadow:0 0 10px #00ff66;
+}
+
+.container{
+width:95%;
+max-width:1200px;
+margin:30px auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+gap:20px;
+}
+
+.card{
+background:#101010;
+border:1px solid #00ff66;
+padding:20px;
+border-radius:12px;
+box-shadow:0 0 15px rgba(0,255,120,.15);
+transition:.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 0 25px rgba(0,255,120,.35);
+}
+
+.card h2{
+color:#00ff66;
+margin-bottom:15px;
+font-size:20px;
+}
+
+.item{
+display:flex;
+justify-content:space-between;
+margin:10px 0;
+padding:8px;
+border-bottom:1px solid #222;
+}
+
+.label{
+color:#8affb5;
+}
+
+.value{
+color:#fff;
+word-break:break-word;
+text-align:right;
+max-width:60%;
+}
+
+.notice{
+width:95%;
+max-width:1200px;
+margin:25px auto;
+background:#0c180c;
+border-left:5px solid #00ff66;
+padding:20px;
+line-height:1.8;
+}
+
+button{
+background:#00ff66;
+border:none;
+padding:12px 20px;
+font-weight:bold;
+cursor:pointer;
+border-radius:8px;
+margin-top:15px;
+}
+
+button:hover{
+background:#00ffaa;
+}
+
+footer{
+margin-top:40px;
+padding:20px;
+text-align:center;
+border-top:1px solid #00ff66;
+color:#88ffbb;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<h1>🌐 Browser Privacy Lab</h1>
+
+<p>Educational demonstration of information your browser voluntarily shares.</p>
+
+</header>
+
+<div class="notice">
+
+<strong>Privacy Notice:</strong><br><br>
+
+This page runs entirely inside your browser.
+
+No information is transmitted anywhere.
+
+Everything displayed below is obtained using standard browser APIs.
+
+</div>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Browser Information</h2>
+
+<div class="item">
+
+<span class="label">Browser</span>
+
+<span class="value" id="browser"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Platform</span>
+
+<span class="value" id="platform"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Language</span>
+
+<span class="value" id="language"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Cookies</span>
+
+<span class="value" id="cookies"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Online</span>
+
+<span class="value" id="online"></span>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Device Information</h2>
+
+<div class="item">
+
+<span class="label">Screen</span>
+
+<span class="value" id="screen"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Color Depth</span>
+
+<span class="value" id="depth"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Time Zone</span>
+
+<span class="value" id="timezone"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Touch Points</span>
+
+<span class="value" id="touch"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">CPU Cores*</span>
+
+<span class="value" id="cpu"></span>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Storage Support</h2>
+
+<div class="item">
+
+<span class="label">Local Storage</span>
+
+<span class="value" id="local"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Session Storage</span>
+
+<span class="value" id="session"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">IndexedDB</span>
+
+<span class="value" id="indexed"></span>
+
+</div>
+
+<div class="item">
+
+<span class="label">Java Enabled</span>
+
+<span class="value" id="java"></span>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Privacy Tips</h2>
+
+<ul style="line-height:2">
+
+<li>✔ Keep your browser updated.</li>
+
+<li>✔ Review website permissions.</li>
+
+<li>✔ Enable Multi-Factor Authentication.</li>
+
+<li>✔ Clear cookies periodically.</li>
+
+<li>✔ Use trusted websites.</li>
+
+<li>✔ Install security updates.</li>
+
+<li>✔ Use privacy-focused browser settings.</li>
+
+</ul>
+
+<button onclick="location.reload()">
+
+Refresh Information
+
+</button>
+
+</div>
+
+</div>
+
+<footer>
+
+Cyber Awareness Lab • Educational Use Only
+
+</footer>
+
+<script>
+
+document.getElementById("browser").innerText=navigator.userAgent;
+
+document.getElementById("platform").innerText=navigator.platform;
+
+document.getElementById("language").innerText=navigator.language;
+
+document.getElementById("cookies").innerText=
+navigator.cookieEnabled?"Enabled":"Disabled";
+
+document.getElementById("online").innerText=
+navigator.onLine?"Online":"Offline";
+
+document.getElementById("screen").innerText=
+screen.width+" × "+screen.height;
+
+document.getElementById("depth").innerText=
+screen.colorDepth+" bit";
+
+document.getElementById("timezone").innerText=
+Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+document.getElementById("touch").innerText=
+navigator.maxTouchPoints||0;
+
+document.getElementById("cpu").innerText=
+navigator.hardwareConcurrency || "Unavailable";
+
+document.getElementById("local").innerText=
+typeof(Storage)!=="undefined"?"Supported":"Not Supported";
+
+document.getElementById("session").innerText=
+window.sessionStorage?"Supported":"Not Supported";
+
+document.getElementById("indexed").innerText=
+window.indexedDB?"Supported":"Not Supported";
+
+document.getElementById("java").innerText=
+navigator.javaEnabled ? (navigator.javaEnabled() ? "Yes":"No") : "Unavailable";
+
+</script>
+
+</body>
+</html>

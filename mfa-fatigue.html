@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MFA Fatigue Attack | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ff4488;}
+header h1{color:#ff4488;font-size:34px;text-shadow:0 0 20px #ff4488;}
+header p{color:#ff88aa;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #ff4488;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#ff4488;margin-bottom:15px;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.phone-ui{max-width:320px;margin:20px auto;background:#0a0a0a;border:2px solid #333;border-radius:20px;padding:20px;}
+.phone-ui .time-bar{display:flex;justify-content:space-between;color:#888;font-size:12px;margin-bottom:15px;}
+.phone-ui .app-name{text-align:center;font-size:14px;color:#aaa;margin-bottom:10px;}
+.push-notif{background:#111;border:1px solid #333;border-radius:12px;padding:15px;margin:8px 0;transition:.3s;animation:slideIn .3s;}
+.push-notif .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.push-notif .header .app-icon{font-size:24px;}
+.push-notif .header .time{color:#888;font-size:11px;}
+.push-notif .title{font-weight:bold;color:#fff;font-size:14px;}
+.push-notif .detail{color:#aaa;font-size:12px;margin:5px 0;}
+.push-notif .actions{display:flex;gap:8px;margin-top:10px;}
+.push-notif .actions button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:13px;transition:.2s;}
+.push-notif .approve{background:#004400;color:#00ff66;border:1px solid #00ff66 !important;}
+.push-notif .approve:hover{background:#006600;}
+.push-notif .deny{background:#440000;color:#ff4444;border:1px solid #ff4444 !important;}
+.push-notif .deny:hover{background:#660000;}
+@keyframes slideIn{from{transform:translateX(-30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+.notif-count{text-align:center;font-size:12px;color:#888;margin-top:10px;}
+
+.btn{background:#ff4488;color:#fff;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #ff4488;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+
+.result-box{padding:15px;border-radius:8px;margin:15px 0;display:none;}
+.result-box.success{background:#002a00;border:1px solid #00ff66;color:#00ff66;display:block;}
+.result-box.fail{background:#2a0000;border:1px solid #ff4444;color:#ff4444;display:block;}
+.result-box.info{background:#2a0015;border:1px solid #ff4488;color:#ff88aa;display:block;}
+
+.tip-box{background:#2a0015;border-left:4px solid #ff4488;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ff4488;color:#ff88aa;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>🔔 MFA Fatigue Attack Lab</h1>
+<p>Understand how attackers overwhelm users with push notifications to bypass MFA</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>🔔 MFA Push Bombing Simulation</h2>
+<p class="desc">MFA Fatigue (also known as MFA push bombing/spamming) is a social engineering technique where attackers repeatedly send MFA push notifications to a target until they accidentally approve one out of frustration or confusion.</p>
+
+<div class="phone-ui">
+<div class="time-bar">
+<span>🔋 98%</span>
+<span>📶 ▂▄▆█</span>
+</div>
+<div class="app-name" id="notifTitle">🔐 Authenticator App</div>
+<div id="pushContainer">
+<div class="push-notif" style="border-left:3px solid #00ff66;">
+<div class="header"><span class="app-icon">🏢</span><span class="time">Just now</span></div>
+<div class="title">Approve Sign-in</div>
+<div class="detail">A login attempt was made from a new device in San Francisco, CA.</div>
+<div class="actions">
+<button class="approve" onclick="acceptMFA(this)">✅ Approve</button>
+<button class="deny" onclick="denyMFA(this)">❌ Deny</button>
+</div>
+</div>
+</div>
+<div class="notif-count" id="notifCount">1 push today • 0 approved</div>
+</div>
+
+<button class="btn danger" onclick="startFatigueAttack()">🔔 Start MFA Fatigue Attack</button>
+<button class="btn" onclick="resetFatigue()">🔄 Reset</button>
+
+<div id="fatigueResult" class="result-box"></div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ Protection</h2>
+<div class="tip-box">
+<strong>🛡️ How to Protect Against MFA Fatigue:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔐 Use hardware security keys (FIDO2/U2F) instead of push notifications</li>
+<li>🔐 Enable number matching in push notifications (Microsoft Authenticator)</li>
+<li>🔐 Set rate limits on MFA push notifications (max 3 per hour)</li>
+<li>🔐 Use contextual MFA — only trigger on expected geolocation/device</li>
+<li>🔐 Train users to NEVER approve unexpected MFA prompts</li>
+<li>🔐 Use passwordless authentication (passkeys, Windows Hello)</li>
+<li>🔐 If you receive unexpected push — change password immediately!</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ff4488";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let fatigueActive = false;
+let acceptedCount = 0;
+let pushCount = 0;
+let fatigueInterval;
+
+const locations = ['San Francisco, CA', 'Moscow, Russia', 'Beijing, China', 'Tehran, Iran', 'Pyongyang, North Korea', 'Jakarta, Indonesia', 'Lagos, Nigeria', 'Bucharest, Romania'];
+
+function startFatigueAttack(){
+if(fatigueActive) return;
+fatigueActive = true;
+pushCount = 0;
+acceptedCount = 0;
+
+pushCount++;
+addPushNotification();
+
+fatigueInterval = setInterval(() => {
+pushCount++;
+addPushNotification();
+document.getElementById('notifCount').textContent = pushCount + ' pushes today • ' + acceptedCount + ' approved';
+
+if(pushCount >= 10){
+clearInterval(fatigueInterval);
+document.getElementById('fatigueResult').className = 'result-box fail';
+document.getElementById('fatigueResult').style.display = 'block';
+document.getElementById('fatigueResult').innerHTML = '💀 <strong>MFA Fatigue Attack Successful!</strong><br><br>'+
+'🔔 Sent ' + pushCount + ' push notifications in 30 seconds<br>'+
+'✅ Victim approved <strong style="color:#ff4444;">' + acceptedCount + '</strong> of them!<br><br>'+
+'🔓 Attacker gained access to corporate VPN with approved push<br>'+
+'💀 Lateral movement inside network initiated...<br><br>'+
+'<em>⚠️ The attacker only needs ONE approval to breach the system!</em>';
+}
+}, 1800);
+}
+
+function addPushNotification(){
+const container = document.getElementById('pushContainer');
+const loc = locations[Math.floor(Math.random() * locations.length)];
+const notif = document.createElement('div');
+notif.className = 'push-notif';
+notif.style.borderLeft = '3px solid #ff4488';
+notif.innerHTML = '<div class="header"><span class="app-icon">🏢</span><span class="time">' + new Date().toLocaleTimeString() + '</span></div>'+
+'<div class="title">Approve Sign-in #' + pushCount + '</div>'+
+'<div class="detail">Login attempt from <strong style="color:#ff4444;">' + loc + '</strong> — Device: Chrome on Windows</div>'+
+'<div class="actions">'+
+'<button class="approve" onclick="acceptMFA(this)">✅ Approve (' + pushCount + ')</button>'+
+'<button class="deny" onclick="denyMFA(this)">❌ Deny</button></div>';
+container.prepend(notif);
+document.getElementById('notifCount').textContent = pushCount + ' pushes today • ' + acceptedCount + ' approved';
+}
+
+function acceptMFA(btn){
+acceptedCount++;
+document.getElementById('notifCount').textContent = pushCount + ' pushes today • ' + acceptedCount + ' approved';
+const notif = btn.closest('.push-notif');
+notif.style.background = '#004400';
+notif.style.borderColor = '#00ff66';
+notif.querySelector('.title').textContent = '✅ Approved!';
+notif.querySelector('.title').style.color = '#00ff66';
+notif.querySelector('.actions').innerHTML = '<div style="color:#00ff66;text-align:center;width:100%;">✅ Access Granted</div>';
+document.getElementById('fatigueResult').className = 'result-box info';
+document.getElementById('fatigueResult').style.display = 'block';
+document.getElementById('fatigueResult').innerHTML = '⚠️ <strong>User approved push #' + pushCount + '!</strong> Attacker now has access.<br><br>'+
+'💡 Tip: Never approve an MFA push you didn\'t initiate!';
+}
+
+function denyMFA(btn){
+const notif = btn.closest('.push-notif');
+notif.style.background = '#440000';
+notif.style.borderColor = '#ff4444';
+notif.querySelector('.title').textContent = '❌ Denied';
+notif.querySelector('.title').style.color = '#ff4444';
+notif.querySelector('.actions').innerHTML = '<div style="color:#ff4444;text-align:center;width:100%;">🚫 Access Denied</div>';
+}
+
+function resetFatigue(){
+fatigueActive = false;
+if(fatigueInterval) clearInterval(fatigueInterval);
+pushCount = 0;
+acceptedCount = 0;
+document.getElementById('pushContainer').innerHTML = '<div class="push-notif" style="border-left:3px solid #00ff66;"><div class="header"><span class="app-icon">🏢</span><span class="time">Just now</span></div><div class="title">Approve Sign-in</div><div class="detail">A login attempt was made from a new device in San Francisco, CA.</div><div class="actions"><button class="approve" onclick="acceptMFA(this)">✅ Approve</button><button class="deny" onclick="denyMFA(this)">❌ Deny</button></div></div>';
+document.getElementById('notifCount').textContent = '1 push today • 0 approved';
+document.getElementById('fatigueResult').style.display = 'none';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookie Theft Simulation | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ffaa00;}
+header h1{color:#ffaa00;font-size:34px;text-shadow:0 0 20px #ffaa00;}
+header p{color:#ffcc66;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #ffaa00;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#ffaa00;margin-bottom:15px;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.browser-demo{background:#0a0a0a;border:1px solid #333;border-radius:12px;padding:20px;margin:15px 0;}
+.site-card{background:#111;border:1px solid #333;border-radius:8px;padding:15px;margin:10px 0;display:flex;align-items:center;gap:12px;transition:.3s;}
+.site-card:hover{border-color:#ffaa00;}
+.site-card .favicon{font-size:24px;}
+.site-card .info{flex:1;}
+.site-card .info .name{font-weight:bold;}
+.site-card .info .cookies{color:#888;font-size:12px;}
+.site-card .status{font-size:12px;padding:3px 8px;border-radius:4px;}
+.site-card .status.theft{background:#2a0000;color:#ff4444;}
+.site-card .status.secure{background:#002a00;color:#00ff66;}
+
+.cookie-jar{background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin:15px 0;font-family:Consolas,monospace;font-size:12px;min-height:100px;max-height:200px;overflow-y:auto;}
+.cookie-item{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.02);word-break:break-all;}
+.cookie-item .name{color:#ffaa00;}
+.cookie-item .value{color:#aaa;}
+.cookie-item .stolen{color:#ff4444;}
+
+.btn{background:#ffaa00;color:#000;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #ffaa00;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+.btn.success{background:#00ff66;color:#000;}
+
+.tip-box{background:#2a1a00;border-left:4px solid #ffaa00;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ffaa00;color:#ffcc66;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>🥠 Cookie Theft Simulation Lab</h1>
+<p>See how attackers steal session cookies to hijack authenticated sessions</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>🥠 Session Cookie Theft & Replay</h2>
+<p class="desc">Cookie theft occurs when an attacker steals HTTP cookies from a victim's browser, then uses those cookies to impersonate the victim on web applications — bypassing login credentials entirely.</p>
+
+<div class="browser-demo">
+<h3 style="color:#ffaa00;margin-bottom:10px;">🧑 Victim's Browser — Stored Cookies</h3>
+<div id="cookieJar" class="cookie-jar">
+<div class="cookie-item"><span class="name">🏦 mybank.com</span> — <span class="value">SESSIONID=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiam9obi5kb2VAZW1haWwuY29tIn0</span></div>
+<div class="cookie-item"><span class="name">📧 gmail.com</span> — <span class="value">SID=0a1b2c3d4e5f6a7b8c9d0e1f</span></div>
+<div class="cookie-item"><span class="name">💼 linkedin.com</span> — <span class="value">li_at=AQEFAQEFAQEFAQEFAQEFAQEFAQE</span></div>
+<div class="cookie-item"><span class="name">🐙 github.com</span> — <span class="value">user_session=abc123def456ghi789jkl</span></div>
+</div>
+
+<div class="site-card" id="victimCard">
+<div class="favicon">🏦</div>
+<div class="info"><div class="name">MyBank.com — Active Session</div><div class="cookies">🍪 3 cookies stored • Session valid until 23:59</div></div>
+<span class="status secure" id="victimStatus">✅ Secured</span>
+</div>
+
+<div class="site-card" id="attackerCard" style="display:none;">
+<div class="favicon">👿</div>
+<div class="info"><div class="name" style="color:#ff4444;">Attacker — Impersonating Victim</div><div class="cookies">🍪 Using stolen cookies to access accounts</div></div>
+<span class="status theft">🚨 Hijacked</span>
+</div>
+</div>
+
+<button class="btn" onclick="viewCookies()">👁️ View Cookies (Click Me)</button>
+<button class="btn danger" onclick="stealCookies()">🥠 Steal Cookies (XSS)</button>
+<button class="btn success" onclick="secureCookies()">🛡️ Secure Cookies</button>
+
+<div id="cookieResult" class="result-box" style="display:none;"></div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ Cookie Security Best Practices</h2>
+<div class="tip-box">
+<strong>🍪 Secure Cookie Configuration:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔒 <strong>Secure Flag</strong> — Cookie only sent over HTTPS</li>
+<li>🚫 <strong>HttpOnly Flag</strong> — Cookie inaccessible to JavaScript (prevents XSS theft)</li>
+<li>🌐 <strong>SameSite Flag</strong> — Strict/Lax prevents CSRF-based cookie theft</li>
+<li>⏰ <strong>Expiration</strong> — Short session lifetimes with token rotation</li>
+<li>🛡️ <strong>Cookie Prefixes</strong> — __Secure- and __Host- for additional security</li>
+<li>🔐 Use <strong>Token Binding</strong> to tie cookies to specific TLS connections</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ffaa00";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let cookiesStolen = false;
+
+function viewCookies(){
+const result = document.getElementById('cookieResult');
+result.style.display = 'block';
+result.className = 'result-box info';
+result.innerHTML = '<strong>🍪 Cookies visible via JavaScript (document.cookie):</strong><br><br>'+
+'<code style="background:#111;padding:8px;border-radius:4px;display:block;color:#ffaa00;">'+
+'SESSIONID=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiam9obi5kb2VAZW1haWwuY29tIn0; '+
+'SID=0a1b2c3d4e5f6a7b8c9d0e1f; '+
+'li_at=AQEFAQEFAQEFAQEFAQEFAQEFAQE; '+
+'user_session=abc123def456ghi789jkl'+
+'</code><br>'+
+'⚠️ If HttpOnly flag is NOT set, any JavaScript (including XSS) can read these!';
+}
+
+function stealCookies(){
+if(cookiesStolen) return;
+cookiesStolen = true;
+
+document.getElementById('victimCard').style.borderColor = '#ff4444';
+document.getElementById('victimStatus').className = 'status theft';
+document.getElementById('victimStatus').textContent = '⚠️ Comprised';
+
+document.getElementById('attackerCard').style.display = 'flex';
+
+const jar = document.getElementById('cookieJar');
+const items = jar.querySelectorAll('.cookie-item');
+items.forEach(item => {
+item.innerHTML = item.innerHTML.replace('class="value"', 'class="stolen"');
+item.innerHTML += ' <span style="color:#ff4444;font-size:10px;">🔓 STOLEN</span>';
+});
+
+const result = document.getElementById('cookieResult');
+result.style.display = 'block';
+result.className = 'result-box fail';
+result.innerHTML = '💀 <strong>Cookie Theft Successful!</strong><br><br>'+
+'🥠 Attacker used XSS to exfiltrate all cookies to <span style="color:#ff4444;">https://evil.com/collect</span><br><br>'+
+'<strong>Stolen Cookies:</strong><br>'+
+'🍪 <strong>MyBank.com</strong> — Session hijacked — Attacker accessed account dashboard<br>'+
+'🍪 <strong>Gmail.com</strong> — Email access compromised — Password reset links intercepted<br>'+
+'🍪 <strong>LinkedIn</strong> — Profile data scraped — Connection list harvested<br>'+
+'🍪 <strong>GitHub</strong> — Private repositories cloned — API tokens exposed<br><br>'+
+'<em>🔒 Solution: Set HttpOnly and Secure flags on all cookies!</em>';
+}
+
+function secureCookies(){
+if(!cookiesStolen) return;
+cookiesStolen = false;
+
+document.getElementById('victimCard').style.borderColor = '#333';
+document.getElementById('victimStatus').className = 'status secure';
+document.getElementById('victimStatus').textContent = '✅ Secured';
+
+document.getElementById('attackerCard').style.display = 'none';
+
+const jar = document.getElementById('cookieJar');
+const items = jar.querySelectorAll('.cookie-item');
+items.forEach(item => {
+item.innerHTML = item.innerHTML.replace('🔓 STOLEN', '');
+const html = item.innerHTML;
+if(html.includes('class="stolen"')){
+item.innerHTML = html.replace('class="stolen"', 'class="value"');
+}
+});
+
+const result = document.getElementById('cookieResult');
+result.style.display = 'block';
+result.className = 'result-box success';
+result.innerHTML = '✅ <strong>Cookies Secured!</strong><br><br>'+
+'🛡️ <strong>HttpOnly</strong> flag set — JavaScript can no longer read cookies<br>'+
+'🔒 <strong>Secure</strong> flag set — Cookies only sent over HTTPS<br>'+
+'🌐 <strong>SameSite=Strict</strong> — Cookies not sent with cross-site requests<br><br>'+
+'XSS cookie theft has been mitigated!';
+}
+</script>
+</body>
+</html>

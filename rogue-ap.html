@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rogue Access Point | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ff8800;}
+header h1{color:#ff8800;font-size:34px;text-shadow:0 0 20px #ff8800;font-family:'Orbitron',sans-serif;}
+header p{color:#ffcc88;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #ff8800;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#ff8800;margin-bottom:15px;font-family:'Orbitron',sans-serif;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.network-map{background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;}
+.device-card{display:flex;align-items:center;gap:15px;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #333;transition:.3s;}
+.device-card:hover{border-color:#ff8800;}
+.device-card .icon{font-size:28px;}
+.device-card .info{flex:1;}
+.device-card .info .name{font-weight:bold;color:#fff;}
+.device-card .info .detail{color:#888;font-size:13px;}
+
+.alert-box{padding:15px;border-radius:8px;margin:15px 0;}
+.alert-box.warning{background:#2a1a00;border:1px solid #ff8800;color:#ffaa00;}
+.alert-box.danger{background:#2a0000;border:1px solid #ff4444;color:#ff4444;}
+.alert-box.success{background:#002a00;border:1px solid #00ff66;color:#00ff66;}
+
+.btn{background:#ff8800;color:#000;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:10px 5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #ff8800;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+.log-box{background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin:15px 0;height:200px;overflow-y:auto;font-family:Consolas,monospace;font-size:12px;}
+.log-line{color:#888;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.02);}
+.log-line.alert{color:#ff4444;}
+.log-line.success{color:#00ff66;}
+.log-line.info{color:#00ccff;}
+
+.tip-box{background:#1a0a00;border-left:4px solid #ff8800;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ff8800;color:#ffcc88;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>📶 Rogue Access Point Lab</h1>
+<p>Understand how unauthorized access points bypass network security</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>📶 Rogue AP Attack Scenario</h2>
+<p class="desc">A rogue access point is an unauthorized Wi-Fi AP installed on a secure network without IT knowledge. Attackers use them to bypass security controls and capture sensitive data.</p>
+
+<div class="network-map">
+<h3 style="color:#ff8800;margin-bottom:15px;">🏢 Corporate Network Map</h3>
+<div class="device-card">
+<div class="icon">🖥️</div>
+<div class="info"><div class="name">Employee Laptop</div><div class="detail">IP: 192.168.1.101 • Connected to Corp-WiFi</div></div>
+</div>
+<div class="device-card">
+<div class="icon">🛡️</div>
+<div class="info"><div class="name">Corporate Firewall</div><div class="detail">IP: 192.168.1.1 • IDS/IPS Active</div></div>
+</div>
+<div class="device-card" style="border-color:rgba(255,0,0,.3);background:rgba(255,0,0,.05);">
+<div class="icon">📡</div>
+<div class="info"><div class="name" style="color:#ff4444;">⚠️ Rogue AP</div><div class="detail">IP: 192.168.1.245 • MAC: Spoofed • Connected behind firewall</div></div>
+<div class="btn danger" style="padding:8px 16px;font-size:12px;" onclick="scanRogue()">🔍 Scan</div>
+</div>
+<div class="device-card">
+<div class="icon">🌐</div>
+<div class="info"><div class="name">Internet Gateway</div><div class="detail">All traffic routes through here</div></div>
+</div>
+</div>
+
+<button class="btn" onclick="deployRogueAP()">⚠️ Deploy Rogue AP</button>
+<button class="btn danger" onclick="detectAndBlock()">🛡️ Detect & Block Rogue AP</button>
+
+<div class="log-box" id="logBox">
+<div class="log-line info">🔍 Network monitoring active...</div>
+<div class="log-line info">📡 3 authorized APs detected</div>
+</div>
+
+<div id="rogueAlert" class="alert-box" style="display:none;"></div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ Detection & Prevention</h2>
+<div class="tip-box">
+<strong>🔍 How to Detect Rogue APs:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>📶 Conduct regular wireless site surveys (e.g., using Ekahau, NetSpot)</li>
+<li>🔍 Use WIDS/WIPS (Wireless Intrusion Detection/Prevention Systems)</li>
+<li>📋 Maintain an inventory of authorized MAC addresses</li>
+<li>🔐 Implement 802.1X with mutual authentication (EAP-TLS)</li>
+<li>📡 Monitor for MAC address spoofing and SSID overlaps</li>
+</ul>
+</div>
+<div class="tip-box" style="border-left-color:#00ff66;">
+<strong>🛡️ Prevention Measures:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔒 Use WPA3-Enterprise with certificate-based authentication</li>
+<li>🔌 Disable unused switch ports to prevent physical AP installation</li>
+<li>📡 Enable AP location tracking via RF fingerprinting</li>
+<li>🔐 Implement Network Access Control (NAC)</li>
+<li>📋 Regular security audits and penetration testing</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ff8800";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let rogueDeployed = false;
+
+function addLog(text, type='info'){
+const log = document.getElementById('logBox');
+const line = document.createElement('div');
+line.className = 'log-line ' + type;
+line.textContent = text;
+log.appendChild(line);
+log.scrollTop = log.scrollHeight;
+}
+
+function deployRogueAP(){
+if(rogueDeployed) return;
+rogueDeployed = true;
+addLog('⚠️ [ALERT] New unauthorized device detected on network!', 'alert');
+addLog('📡 MAC: AA:BB:CC:DD:EE:11 (not in authorized list)', 'alert');
+addLog('📶 Broadcasting SSID: "Corp-Guest" on channel 6', 'alert');
+addLog('🔓 Encryption: Open (no authentication required)', 'alert');
+addLog('⚠️ Rogue AP is now intercepting client connections!', 'alert');
+
+const alert = document.getElementById('rogueAlert');
+alert.style.display = 'block';
+alert.className = 'alert-box danger';
+alert.innerHTML = '🚨 <strong>CRITICAL ALERT:</strong> Rogue AP detected!<br><br>'+
+'📡 SSID: "Corp-Guest" (mimics legitimate guest network)<br>'+
+'🔓 Security: Open (no encryption)<br>'+
+'⚠️ DHCP server active — assigning malicious gateway (192.168.1.254)<br><br>'+
+'<strong style="color:#ff4444;">All traffic from connected clients is being monitored and captured!</strong>';
+}
+
+function detectAndBlock(){
+if(!rogueDeployed) {
+addLog('✅ No rogue AP detected. Network is secure.', 'success');
+return;
+}
+addLog('🛡️ WIDS triggered — investigating rogue device...', 'info');
+addLog('🔍 MAC fingerprinting: Vendor = "Generic" (unknown)', 'info');
+addLog('📡 Signal triangulation: Rogue AP located at Floor 2, Conference Room B', 'info');
+addLog('🛡️ Automated countermeasures deployed...', 'info');
+addLog('🔌 De-authenticating clients from rogue AP', 'success');
+addLog('🚫 Blocking MAC address on network switches', 'success');
+addLog('✅ Rogue AP has been contained and removed', 'success');
+
+const alert = document.getElementById('rogueAlert');
+alert.style.display = 'block';
+alert.className = 'alert-box success';
+alert.innerHTML = '✅ <strong>Rogue AP Successfully Blocked!</strong><br><br>'+
+'🛡️ MAC filtered on all switch ports<br>'+
+'🔌 Clients re-connected to authorized APs<br>'+
+'📋 Incident report filed for security review<br><br>'+
+'<strong>Network security has been restored.</strong>';
+rogueDeployed = false;
+}
+
+function scanRogue(){
+addLog('🔍 Scanning for rogue access points...', 'info');
+setTimeout(() => {
+if(!rogueDeployed){
+addLog('✅ No rogue APs detected in current scan', 'success');
+} else {
+addLog('⚠️ Unauthorized device found: MAC AA:BB:CC:DD:EE:11', 'alert');
+addLog('🔴 Risk: HIGH — Device is bridged to internal network', 'alert');
+}
+}, 500);
+}
+</script>
+</body>
+</html>

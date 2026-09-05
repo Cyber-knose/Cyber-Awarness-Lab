@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evil Twin Wi-Fi Attack | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #00ccff;}
+header h1{color:#00ccff;font-size:34px;text-shadow:0 0 20px #00ccff;font-family:'Orbitron',sans-serif;}
+header p{color:#88eeff;margin-top:8px;}
+.container{max-width:1200px;margin:30px auto;padding:20px;}
+
+.tab-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:25px;background:rgba(255,255,255,.03);border-radius:12px;padding:10px;border:1px solid #00ccff;}
+.tab-btn{background:#111;border:1px solid #333;color:#aaa;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:12px;transition:.3s;flex:1;min-width:100px;text-align:center;font-family:'Orbitron',sans-serif;}
+.tab-btn:hover{border-color:#00ccff;color:#fff;}
+.tab-btn.active{background:#00ccff;color:#000;border-color:#00ccff;font-weight:bold;}
+.tab-btn .emoji{font-size:18px;display:block;margin-bottom:3px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #00ccff;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);display:none;}
+.lab-content.active{display:block;}
+.lab-content h2{color:#00ccff;margin-bottom:15px;font-family:'Orbitron',sans-serif;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.wifi-scanner{background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;}
+.wifi-network{display:flex;justify-content:space-between;align-items:center;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #333;transition:.3s;cursor:pointer;}
+.wifi-network:hover{border-color:#00ccff;}
+.wifi-network.legitimate{background:rgba(0,255,100,.05);border-color:rgba(0,255,100,.3);}
+.wifi-network.evil{background:rgba(255,0,0,.05);border-color:rgba(255,0,0,.3);}
+.wifi-network .signal{font-size:20px;}
+.wifi-network .name{font-weight:bold;flex:1;margin-left:10px;}
+.wifi-network .status{font-size:12px;padding:3px 8px;border-radius:4px;}
+.wifi-network .status.secure{background:#002a00;color:#00ff66;}
+.wifi-network .status.danger{background:#2a0000;color:#ff4444;}
+
+.sim-result{background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;min-height:100px;}
+.sim-result .data-line{color:#0f0;font-size:13px;font-family:Consolas,monospace;padding:3px 0;border-bottom:1px solid rgba(0,255,0,.1);}
+.sim-result .data-line.stolen{color:#ff4444;}
+.sim-result .data-line.safe{color:#00ff66;}
+
+.attack-btn{background:#00ccff;color:#000;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:10px 5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.attack-btn:hover{transform:scale(1.03);box-shadow:0 0 20px #00ccff;}
+.attack-btn.danger{background:#ff4444;color:#fff;}
+.attack-btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+.attack-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+.result-box{padding:15px;border-radius:8px;margin:15px 0;display:none;}
+.result-box.success{background:#002a00;border:1px solid #00ff66;color:#00ff66;display:block;}
+.result-box.fail{background:#2a0000;border:1px solid #ff4444;color:#ff4444;display:block;}
+.result-box.info{background:#001a2a;border:1px solid #00ccff;color:#66ddff;display:block;}
+
+.network-viz{position:relative;height:300px;background:#0a0a0a;border:1px solid #333;border-radius:10px;margin:15px 0;overflow:hidden;}
+.network-viz .device{position:absolute;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid;transition:.5s;}
+.network-viz .device.client{background:rgba(0,204,255,.1);border-color:#00ccff;}
+.network-viz .device.legit-ap{background:rgba(0,255,100,.1);border-color:#00ff66;}
+.network-viz .device.evil-ap{background:rgba(255,0,0,.1);border-color:#ff4444;}
+.network-viz .device.server{background:rgba(255,255,0,.1);border-color:#ffff00;}
+.network-viz .conn-line{position:absolute;height:2px;background:rgba(0,204,255,.3);transform-origin:0 0;}
+
+.tip-box{background:#000a1a;border-left:4px solid #00ccff;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #00ccff;color:#88eeff;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>📡 Evil Twin Wi-Fi Attack Lab</h1>
+<p>Learn how attackers deploy rogue access points to intercept network traffic</p>
+</header>
+<div class="container">
+
+<div class="tab-bar" id="tabBar">
+<button class="tab-btn active" onclick="switchTab(0)"><span class="emoji">📡</span>Attack Demo</button>
+<button class="tab-btn" onclick="switchTab(1)"><span class="emoji">🔍</span>Detection</button>
+<button class="tab-btn" onclick="switchTab(2)"><span class="emoji">🛡️</span>Prevention</button>
+</div>
+
+<!-- Lab 0: Attack Demo -->
+<div class="lab-content active" id="lab0">
+<h2>📡 Evil Twin Attack Simulation</h2>
+<p class="desc">An evil twin attack works by broadcasting a fake Wi-Fi network with the same SSID as a legitimate one. When victims connect, the attacker can intercept all traffic.</p>
+
+<div class="wifi-scanner">
+<h3 style="color:#00ccff;margin-bottom:15px;">📶 Available Wi-Fi Networks</h3>
+<div class="wifi-network legitimate" onclick="connectToNetwork('legit')">
+<span class="signal">🔵</span>
+<span class="name">🏢 Office_Guest</span>
+<span style="color:#888;">Signal: 98%</span>
+<span class="status secure">✅ Legitimate</span>
+</div>
+<div class="wifi-network evil" onclick="connectToNetwork('evil')">
+<span class="signal">🔵</span>
+<span class="name">🏢 Office_Guest <span style="color:#ff4444;font-size:11px;">(2)</span></span>
+<span style="color:#888;">Signal: 100%</span>
+<span class="status danger">⚠️ EVIL TWIN</span>
+</div>
+<div class="wifi-network" onclick="connectToNetwork('other')">
+<span class="signal">🔵</span>
+<span class="name">📱 Coffee_Shop_Free</span>
+<span style="color:#888;">Signal: 45%</span>
+<span class="status">🔓 Open</span>
+</div>
+</div>
+
+<button class="attack-btn danger" onclick="simulateEvilTwin()">⚠️ Simulate Evil Twin Attack</button>
+<button class="attack-btn" onclick="resetSimulation()">🔄 Reset</button>
+
+<div class="network-viz" id="networkViz">
+<div class="device client" style="left:20%;top:40%;">💻</div>
+<div class="device legit-ap" style="left:60%;top:20%;">📡<br><span style="font-size:10px;">Legit AP</span></div>
+<div class="device evil-ap" style="left:60%;top:60%;display:none;" id="evilAP">📡<br><span style="font-size:10px;">Evil Twin</span></div>
+<div class="device server" style="left:80%;top:40%;">🌐</div>
+</div>
+
+<div class="sim-result" id="simResult">
+<p style="color:#888;">Click "Simulate Evil Twin Attack" to begin...</p>
+</div>
+</div>
+
+<!-- Lab 1: Detection -->
+<div class="lab-content" id="lab1">
+<h2>🔍 How to Detect an Evil Twin Attack</h2>
+<p class="desc">Learn the telltale signs of an evil twin attack and how to identify rogue access points.</p>
+
+<div class="wifi-scanner">
+<h3 style="color:#00ccff;margin-bottom:15px;">⚠️ Detection Indicators</h3>
+<div style="background:#111;border:1px solid #333;border-radius:8px;padding:15px;margin:10px 0;">
+<p><strong style="color:#ff4444;">🔴 Duplicate Network Names (SSIDs)</strong></p>
+<p style="color:#aaa;margin-top:5px;">Multiple networks with the same name appearing in the list is a major red flag.</p>
+</div>
+<div style="background:#111;border:1px solid #333;border-radius:8px;padding:15px;margin:10px 0;">
+<p><strong style="color:#ff4444;">🔴 Weak Signal Strength Anomaly</strong></p>
+<p style="color:#aaa;margin-top:5px;">The evil twin is placed close to victims, often showing a stronger signal than the legitimate AP.</p>
+</div>
+<div style="background:#111;border:1px solid #333;border-radius:8px;padding:15px;margin:10px 0;">
+<p><strong style="color:#ff4444;">🔴 Unexpected Certificate Warnings</strong></p>
+<p style="color:#aaa;margin-top:5px;">HTTP connections redirect to fake login pages with invalid SSL certificates.</p>
+</div>
+<div style="background:#111;border:1px solid #333;border-radius:8px;padding:15px;margin:10px 0;">
+<p><strong style="color:#ff4444;">🔴 Sudden Disconnection / Reconnection</strong></p>
+<p style="color:#aaa;margin-top:5px;">Attackers de-authenticate victims from the real AP to force them onto the evil twin.</p>
+</div>
+</div>
+
+<button class="attack-btn" onclick="showDetectionDemo()">🔍 Run Detection Scanner</button>
+<div id="detectionResult" class="result-box"></div>
+</div>
+
+<!-- Lab 2: Prevention -->
+<div class="lab-content" id="lab2">
+<h2>🛡️ Prevention & Best Practices</h2>
+<p class="desc">Essential measures to protect against evil twin and rogue access point attacks.</p>
+
+<div class="tip-box">
+<strong>🛡️ Defense Strategies:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔐 Use a VPN (Virtual Private Network) on all public Wi-Fi</li>
+<li>🔐 Verify network legitimacy with the venue staff before connecting</li>
+<li>🔐 Use WPA2/WPA3 Enterprise (802.1X) with certificate validation</li>
+<li>🔐 Disable auto-connect to open Wi-Fi networks</li>
+<li>🔐 Use a Wi-Fi security scanner app (e.g., Wireshark, Kismet)</li>
+<li>🔐 Implement 802.11w (Management Frame Protection)</li>
+<li>🔐 Monitor for de-authentication attacks using WIDS/WIPS</li>
+<li>🔐 Use HTTPS Everywhere / browser extension for forced HTTPS</li>
+</ul>
+</div>
+
+<div class="tip-box" style="border-left-color:#ff4444;">
+<strong>🚨 What to Do If You Suspect an Evil Twin:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔌 Disconnect from the Wi-Fi network immediately</li>
+<li>📱 Switch to cellular data (4G/5G) instead</li>
+<li>📞 Report the suspicious network to IT security</li>
+<li>🔑 Change any passwords entered while connected</li>
+<li>🔄 Run a full antivirus scan on your device</li>
+</ul>
+</div>
+</div>
+
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#00ccff";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+function switchTab(id){
+document.querySelectorAll(".tab-btn").forEach((b,i)=>b.classList.toggle("active",i===id));
+document.querySelectorAll(".lab-content").forEach((c,i)=>c.classList.toggle("active",i===id));
+}
+
+let attackActive=false;
+
+function connectToNetwork(type){
+if(type==='evil'){
+document.getElementById('simResult').innerHTML = 
+'<div class="data-line stolen">⚠️ Connecting to "Office_Guest" (evil twin)...</div>'+
+'<div class="data-line stolen">📡 MAC Address: 00:1A:2B:3C:4D:5E (spoofed)</div>'+
+'<div class="data-line stolen">🔓 Encryption: WPA2 (fake handshake)</div>'+
+'<div class="data-line stolen">❌ All traffic now being intercepted by attacker!</div>';
+} else if(type==='legit'){
+document.getElementById('simResult').innerHTML = 
+'<div class="data-line safe">✅ Connecting to legitimate "Office_Guest"...</div>'+
+'<div class="data-line safe">🔒 WPA2 Enterprise with 802.1X authentication</div>'+
+'<div class="data-line safe">✅ Connection secured — no interception possible</div>';
+} else {
+document.getElementById('simResult').innerHTML = 
+'<div class="data-line safe">📱 Connecting to "Coffee_Shop_Free"...</div>'+
+'<div class="data-line stolen">⚠️ Open network detected — traffic is unencrypted!</div>'+
+'<div class="data-line" style="color:#ffaa00;">💡 Use a VPN on public Wi-Fi!</div>';
+}
+}
+
+function simulateEvilTwin(){
+if(attackActive) return;
+attackActive = true;
+const evilAP = document.getElementById('evilAP');
+evilAP.style.display = 'flex';
+evilAP.style.animation = 'pulse 1s infinite';
+
+const result = document.getElementById('simResult');
+let step = 1;
+const steps = [
+'<div class="data-line stolen">⚠️ [STEP 1] Attacker sets up rogue AP with SSID "Office_Guest"...</div>',
+'<div class="data-line stolen">⚠️ [STEP 2] De-authentication packets sent to legitimate AP clients...</div>',
+'<div class="data-line stolen">⚠️ [STEP 3] Victims disconnect from real AP and reconnect to evil twin...</div>',
+'<div class="data-line stolen">⚠️ [STEP 4] ARP spoofing enabled — now performing MITM...</div>',
+'<div class="data-line stolen">🔓 [STEP 5] Captured credentials: user@company.com / Password123!</div>',
+'<div class="data-line stolen">🔓 [STEP 6] Session cookie intercepted: SESSIONID=abc123xyz...</div>',
+'<div class="data-line stolen">🔓 [STEP 7] Banking session hijacked — $2,500 transfer initiated!</div>',
+'<div class="data-line stolen">💀 ATTACK COMPLETE — All traffic intercepted and logged</div>'
+];
+
+result.innerHTML = '<div class="data-line">🚀 Evil twin attack initiated...</div>';
+const interval = setInterval(() => {
+if(step >= steps.length) {
+clearInterval(interval);
+evilAP.style.animation = '';
+result.innerHTML += '<div class="data-line stolen" style="font-weight:bold;margin-top:10px;">⚠️ This is what happens in a real evil twin attack!</div>';
+return;
+}
+result.innerHTML += steps[step-1];
+result.scrollTop = result.scrollHeight;
+step++;
+}, 1200);
+}
+
+function resetSimulation(){
+attackActive = false;
+document.getElementById('evilAP').style.display = 'none';
+document.getElementById('simResult').innerHTML = '<p style="color:#888;">Simulation reset. Click "Simulate Evil Twin Attack" to begin...</p>';
+}
+
+function showDetectionDemo(){
+const r = document.getElementById('detectionResult');
+r.className = 'result-box info';
+r.innerHTML = '🔍 <strong>Detection Scanner Results:</strong><br><br>'+
+'✅ Network 1: "Office_Guest" — Legitimate (MAC: 00:1A:2B:3C:4D:5E, Vendor: Cisco)<br>'+
+'⚠️ Network 2: "Office_Guest" — <strong style="color:#ff4444;">SUSPICIOUS</strong> (MAC: AA:BB:CC:DD:EE:FF, Vendor: Unknown)<br>'+
+'✅ Network 3: "Coffee_Shop_Free" — Open network, no encryption<br><br>'+
+'<strong style="color:#ff4444;">🚨 ALERT: Evil twin detected! Duplicate SSID "Office_Guest" found with different MAC address!</strong>';
+}
+</script>
+</body>
+</html>

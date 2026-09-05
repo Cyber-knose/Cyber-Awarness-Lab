@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Botnet Simulation | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ff00ff;}
+header h1{color:#ff00ff;font-size:34px;text-shadow:0 0 20px #ff00ff;font-family:'Orbitron',sans-serif;}
+header p{color:#ff88ff;margin-top:8px;}
+.container{max-width:1100px;margin:30px auto;padding:20px;}
+.card{background:rgba(255,255,255,.05);border:1px solid #ff00ff;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.card h2{color:#ff00ff;margin-bottom:15px;font-family:'Orbitron',sans-serif;}
+.botnet-canvas{width:100%;height:380px;background:#0a0a0a;border-radius:12px;border:1px solid #ff00ff;display:block;}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0;}
+.btn{background:#ff00ff;color:#000;border:none;padding:12px 22px;font-weight:bold;border-radius:8px;cursor:pointer;transition:.3s;font-family:'Orbitron',sans-serif;margin:5px;}
+.btn:hover{transform:scale(1.05);box-shadow:0 0 20px #ff00ff;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-green{background:#00ff66;}
+.btn-red{background:#ff4444;color:#fff;}
+.btn-blue{background:#0088ff;color:#fff;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:15px 0;}
+.stat-box{background:#111;border:1px solid #ff00ff;border-radius:8px;padding:12px;text-align:center;}
+.stat-box h4{color:#ff88ff;font-size:12px;}
+.stat-box span{font-size:22px;color:#ff00ff;font-weight:bold;}
+.console{background:#0a0a0a;border:1px solid #ff00ff;border-radius:8px;padding:12px;height:160px;overflow-y:auto;font-family:Consolas,monospace;color:#ff88ff;font-size:13px;margin:15px 0;}
+.console .line{margin:3px 0;}
+.console .green{color:#00ff66;}
+.console .yellow{color:#ffaa00;}
+.console .red{color:#ff4444;}
+.tip-box{background:#0a000a;border-left:4px solid #00ff66;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ff00ff;color:#ff88ff;}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<header>
+<h1>🌐 Botnet Communication Simulation</h1>
+<p>Visualize how a botnet's C2 server controls thousands of infected nodes</p>
+</header>
+<div class="container">
+<div class="card">
+<h2>🗺️ Botnet Network Map</h2>
+<canvas id="botCanvas" class="botnet-canvas"></canvas>
+<div class="controls">
+<button class="btn" id="buildBtn" onclick="buildBotnet()">🏗️ Build Botnet</button>
+<button class="btn btn-red" id="ddosBtn" onclick="startDDoS()" disabled>🌊 Launch DDoS Attack</button>
+<button class="btn btn-blue" id="updateBtn" onclick="updateC2()" disabled>📡 C2 Update Command</button>
+<button class="btn btn-green" onclick="resetBotnet()">🔄 Reset</button>
+</div>
+<div class="stats">
+<div class="stat-box"><h4>Total Bots</h4><span id="botCount">0</span></div>
+<div class="stat-box"><h4>🟢 Online</h4><span id="onlineCount" style="color:#00ff66;">0</span></div>
+<div class="stat-box"><h4>🔴 C2 Server</h4><span id="c2Status" style="color:#ff4444;">Offline</span></div>
+<div class="stat-box"><h4>📤 Data Exfil</h4><span id="exfilData">0 MB</span></div>
+</div>
+</div>
+<div class="card">
+<h2>📋 Command & Control Log</h2>
+<div class="console" id="console"><div class="line green">[C2] Server initializing on port 8443...</div></div>
+</div>
+<div class="card">
+<h2>🛡️ Botnet Defense Strategies</h2>
+<div class="tip-box">
+<ul style="line-height:2.2;margin-left:20px;">
+<li>✔ Botnets are networks of compromised devices controlled by a C2 server</li>
+<li>✔ Common C2 protocols: IRC, HTTP(S), DNS tunneling, Tor</li>
+<li>✔ DDoS attacks overwhelm targets with traffic from thousands of bots</li>
+<li>✔ Network monitoring + DNS sinkholing can disrupt C2 channels</li>
+<li>✔ IoT devices are increasingly targeted for botnet recruitment</li>
+<li>✔ Use EDR to detect beaconing behavior (periodic callbacks to C2)</li>
+<li>✔ Block known malicious IPs and domains via threat intelligence feeds</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Educational Simulation Only</footer>
+<script>
+const bg=document.getElementById("bg");const bctx=bg.getContext("2d");
+bg.width=window.innerWidth;bg.height=window.innerHeight;
+const ch="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cl=Math.floor(bg.width/sz);const dr=Array(cl).fill(1);
+function dm(){bctx.fillStyle="rgba(0,0,0,0.05)";bctx.fillRect(0,0,bg.width,bg.height);bctx.fillStyle="#ff00ff";bctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=ch[Math.floor(Math.random()*ch.length)];bctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>bg.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(dm,35);
+window.onresize=()=>{bg.width=window.innerWidth;bg.height=window.innerHeight;};
+
+const cvs=document.getElementById("botCanvas");const ctx=cvs.getContext("2d");
+let W=cvs.width=800,H=cvs.height=380;
+let c2={x:W/2,y:40,r:18,active:false};
+let bots=[],beacons=[],running=false,buildInterval=null,ddosActive=false,ddosInterval=null;
+const consoleEl=document.getElementById("console");
+const buildBtn=document.getElementById("buildBtn");
+const ddosBtn=document.getElementById("ddosBtn");
+const updateBtn=document.getElementById("updateBtn");
+let botCount=0,exfil=0;
+
+function resizeBots(){W=cvs.width=cvs.clientWidth;H=cvs.height=380;c2.x=W/2;c2.y=40;drawScene();}
+window.addEventListener("resize",resizeBots);
+
+function addLog(msg,cls=""){
+const d=document.createElement("div");d.className="line "+cls;
+d.innerHTML=msg;consoleEl.appendChild(d);consoleEl.scrollTop=consoleEl.scrollHeight;
+}
+
+function drawScene(){
+ctx.clearRect(0,0,W,H);ctx.fillStyle="#0a0a0a";ctx.fillRect(0,0,W,H);
+// Draw connections
+bots.forEach(b=>{
+const dx=c2.x-b.x,dy=c2.y-b.y;const dist=Math.sqrt(dx*dx+dy*dy);
+ctx.strokeStyle=b.active?"rgba(255,0,255,0.25)":"rgba(100,100,100,0.1)";
+ctx.lineWidth=b.active?1.5:0.5;ctx.setLineDash(b.active?[]:[3,3]);
+ctx.beginPath();ctx.moveTo(c2.x,c2.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash([]);
+});
+// Draw C2
+ctx.beginPath();ctx.arc(c2.x,c2.y,c2.r,0,Math.PI*2);
+const grad=ctx.createRadialGradient(c2.x,c2.y,0,c2.x,c2.y,c2.r);
+grad.addColorStop(0,"#ff88ff");grad.addColorStop(1,"#880088");
+ctx.fillStyle=grad;ctx.fill();
+ctx.shadowColor="#ff00ff";ctx.shadowBlur=20;ctx.fill();ctx.shadowBlur=0;
+ctx.strokeStyle="#ff00ff";ctx.lineWidth=2;ctx.stroke();
+ctx.fillStyle="#fff";ctx.font="bold 11px Arial";ctx.textAlign="center";
+ctx.fillText("C2 SERVER",c2.x,c2.y+4);
+// Draw bots
+bots.forEach(b=>{
+ctx.beginPath();ctx.arc(b.x,b.y,6,0,Math.PI*2);
+ctx.fillStyle=b.active?b.ddos?"#ff4444":"#00ff66":"#444";
+ctx.fill();
+if(b.ddos){
+ctx.shadowColor="#ff4444";ctx.shadowBlur=10;
+ctx.beginPath();ctx.arc(b.x,b.y,8,0,Math.PI*2);ctx.fillStyle="rgba(255,68,68,0.3)";ctx.fill();ctx.shadowBlur=0;
+}
+const label=b.ddos?"DDOS":"BOT";
+ctx.fillStyle="#888";ctx.font="8px Arial";ctx.textAlign="center";
+ctx.fillText(label,b.x,b.y+16);
+});
+// DDoS target
+if(ddosActive){
+ctx.fillStyle="rgba(255,0,0,0.1)";ctx.fillRect(W-160,30,130,30);
+ctx.strokeStyle="#ff4444";ctx.lineWidth=1;ctx.setLineDash([4,4]);
+ctx.strokeRect(W-160,30,130,30);ctx.setLineDash([]);
+ctx.fillStyle="#ff4444";ctx.font="bold 12px Arial";ctx.textAlign="center";
+ctx.fillText("🎯 TARGET: victim.com",W-95,50);
+}
+}
+
+function buildBotnet(){
+if(running)return;running=true;buildBtn.disabled=true;
+c2.active=true;document.getElementById("c2Status").textContent="Online";
+document.getElementById("c2Status").style.color="#ff00ff";
+addLog("[C2] C2 server online at 185.234.72.19:8443","green");
+addLog("[C2] Waiting for beacon connections...","yellow");
+let count=0;
+buildInterval=setInterval(()=>{
+if(count>=30){clearInterval(buildInterval);
+addLog("[C2] Botnet fully operational — 30 bots connected","green");
+addLog("[C2] Botnet ready for commands: DDOS, UPDATE, EXFIL","green");
+ddosBtn.disabled=false;updateBtn.disabled=false;
+document.getElementById("onlineCount").textContent="30";
+return;}
+const x=30+Math.random()*(W-60);const y=60+Math.random()*(H-50);
+bots.push({x,y,active:true,ddos:false});
+count++;botCount++;
+document.getElementById("botCount").textContent=botCount;
+const t=new Date().toLocaleTimeString();
+addLog(`[+] Bot ${count} connected from ${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)} (${Math.random()>0.5?"Windows 10":"Linux/ARM"})`,"green");
+drawScene();
+},400);
+}
+
+function startDDoS(){
+if(ddosActive)return;ddosActive=true;
+ddosBtn.textContent="⏳ DDoS In Progress...";ddosBtn.disabled=true;
+addLog("[C2] COMMAND: Launching DDoS attack on victim.com","red");
+bots.forEach(b=>{if(Math.random()>0.2){b.ddos=true;}});
+let packets=0;
+ddosInterval=setInterval(()=>{
+packets+=bots.filter(b=>b.ddos).length*Math.floor(Math.random()*10+5);
+bots.forEach(b=>{if(b.ddos)b.x+=Math.random()*4-2;b.y+=Math.random()*2-1;});
+drawScene();
+const t=new Date().toLocaleTimeString();
+if(packets%1000<100)addLog(`[DDOS] ${t} — ${packets.toLocaleString()} packets/s → victim.com`,"red");
+exfil+=Math.floor(Math.random()*5);
+document.getElementById("exfilData").textContent=exfil+" MB";
+},500);
+addLog("[DDOS] Multi-vector attack initiated: SYN flood + HTTP flood + DNS amplification","red");
+addLog("[DDOS] Total bandwidth: "+(bots.filter(b=>b.ddos).length*2.5).toFixed(1)+" Gbps","red");
+}
+
+function updateC2(){
+addLog("[C2] Pushing update to all bots...","yellow");
+addLog("[C2] New modules deployed: credential_stealer.dll + crypto_miner.exe","yellow");
+addLog("[C2] All 30 bots confirmed update receipt","green");
+}
+
+function resetBotnet(){
+running=false;ddosActive=false;
+if(buildInterval)clearInterval(buildInterval);
+if(ddosInterval)clearInterval(ddosInterval);
+bots=[];botCount=0;exfil=0;c2.active=false;
+ddosBtn.textContent="🌊 Launch DDoS Attack";ddosBtn.disabled=true;updateBtn.disabled=true;
+buildBtn.disabled=false;
+document.getElementById("botCount").textContent="0";
+document.getElementById("onlineCount").textContent="0";
+document.getElementById("c2Status").textContent="Offline";
+document.getElementById("c2Status").style.color="#ff4444";
+document.getElementById("exfilData").textContent="0 MB";
+consoleEl.innerHTML="<div class='line green'>[C2] Server initializing on port 8443...</div>";
+drawScene();
+addLog("🔄 Botnet dismantled. Network reset.","green");
+}
+
+drawScene();
+addLog("[C2] Ready. Click 'Build Botnet' to simulate C2 operations.","yellow");
+</script>
+</body>
+</html>

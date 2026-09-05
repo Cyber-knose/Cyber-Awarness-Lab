@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply Chain Attack Demo | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #aa66ff;}
+header h1{color:#aa66ff;font-size:34px;text-shadow:0 0 20px #aa66ff;}
+header p{color:#ccaaff;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #aa66ff;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#aa66ff;margin-bottom:15px;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.supply-chain-viz{position:relative;padding:20px;margin:15px 0;}
+.sc-node{display:flex;align-items:center;gap:12px;padding:15px;margin:8px 0;border-radius:10px;border:2px solid #333;transition:.3s;position:relative;}
+.sc-node:hover{transform:translateX(5px);}
+.sc-node .icon{font-size:28px;}
+.sc-node .info{flex:1;}
+.sc-node .info .name{font-weight:bold;color:#fff;}
+.sc-node .info .desc{color:#888;font-size:12px;}
+.sc-node .status-indicator{width:12px;height:12px;border-radius:50%;}
+.sc-node .status-indicator.safe{background:#00ff66;}
+.sc-node .status-indicator.comp{background:#ff4444;}
+.sc-node .status-indicator.unknown{background:#ffaa00;}
+.sc-node.comp{background:rgba(255,0,0,.05);border-color:#ff4444;}
+.sc-node.arrow-down::after{content:'⬇️';position:absolute;left:50%;bottom:-20px;font-size:16px;}
+
+.attack-timeline{background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin:15px 0;font-family:Consolas,monospace;font-size:12px;min-height:150px;max-height:250px;overflow-y:auto;}
+.tl-event{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.02);}
+.tl-event.critical{color:#ff4444;}
+.tl-event.info{color:#88aaff;}
+.tl-event.success{color:#00ff66;}
+.tl-event .time{color:#888;margin-right:10px;}
+
+.btn{background:#aa66ff;color:#fff;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #aa66ff;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+
+.tip-box{background:#1a0a2a;border-left:4px solid #aa66ff;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #aa66ff;color:#ccaaff;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>⛓️ Supply Chain Attack Lab</h1>
+<p>See how compromising a third-party vendor can cascade into a full breach</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>⛓️ Supply Chain Attack Simulation</h2>
+<p class="desc">A supply chain attack targets a less-secure third-party vendor with access to the primary target's systems, exploiting trust relationships to infiltrate otherwise secure networks.</p>
+
+<h3 style="color:#aa66ff;margin:20px 0 15px;">🏢 Supply Chain Dependency Map</h3>
+<div class="supply-chain-viz">
+<div class="sc-node" style="border-color:#ff4444;" id="nodeAttacker">
+<div class="icon">👿</div>
+<div class="info"><div class="name" style="color:#ff4444;">Attacker</div><div class="desc">Initial breach vector</div></div>
+<div class="status-indicator comp"></div>
+</div>
+
+<div class="sc-node" id="nodeVendor">
+<div class="icon">🏭</div>
+<div class="info"><div class="name">CloudSync Solutions (Vendor)</div><div class="desc">Managed backup provider • VPN access to corporate network</div></div>
+<div class="status-indicator safe"></div>
+</div>
+
+<div class="sc-node" id="nodeCorporate">
+<div class="icon">🏢</div>
+<div class="info"><div class="name">Target Corporation</div><div class="desc">Primary target • 50,000 employees • Financial data</div></div>
+<div class="status-indicator safe"></div>
+</div>
+
+<div class="sc-node" id="nodeClient">
+<div class="icon">👥</div>
+<div class="info"><div class="name">Enterprise Clients</div><div class="desc">Banking, healthcare, government sectors</div></div>
+<div class="status-indicator safe"></div>
+</div>
+</div>
+
+<button class="btn danger" onclick="simulateSupplyChain()">⚠️ Simulate Supply Chain Attack</button>
+<button class="btn" onclick="resetSC()">🔄 Reset</button>
+
+<div class="attack-timeline" id="timeline">
+<div class="tl-event info"><span class="time">[00:00]</span>🔍 Supply chain monitoring active</div>
+<div class="tl-event success"><span class="time">[00:00]</span>✅ All vendors compliant with security policies</div>
+</div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ Defense</h2>
+<div class="tip-box">
+<strong>🛡️ How to Protect Against Supply Chain Attacks:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔐 Conduct thorough vendor security assessments before onboarding</li>
+<li>🔐 Implement least-privilege access for all third-party integrations</li>
+<li>🔐 Use Software Bill of Materials (SBOM) to track dependencies</li>
+<li>🔐 Monitor vendor network traffic for anomalies</li>
+<li>🔐 Require multi-factor authentication (MFA) for vendor access</li>
+<li>🔐 Perform regular penetration tests on vendor integrations</li>
+<li>🔐 Have incident response plans specific to supply chain breaches</li>
+<li>🔐 Use Zero Trust architecture — never trust, always verify</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#aa66ff";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let attackRunning = false;
+
+function simulateSupplyChain(){
+if(attackRunning) return;
+attackRunning = true;
+
+const timeline = document.getElementById('timeline');
+timeline.innerHTML = '';
+
+const events = [
+{time: '00:00', text: '🔍 Attacker identifies CloudSync Solutions as vendor for Target Corporation', type: 'info'},
+{time: '00:15', text: '⚠️ Attacker exploits CVE-2024-xxxx in CloudSync backup appliance', type: 'critical'},
+{time: '01:30', text: '🔓 Initial foothold established — vendor perimeter breached', type: 'critical'},
+{time: '02:45', text: '🔓 Lateral movement inside vendor network — scanning for VPN credentials', type: 'critical'},
+{time: '04:00', text: '🔓 Vendor VPN credentials stolen — connecting to Target Corp network', type: 'critical'},
+{time: '05:30', text: '🔓 Active Directory enumeration — 12,000 user accounts discovered', type: 'critical'},
+{time: '07:00', text: '🔓 Domain admin privileges escalated — full network control achieved', type: 'critical'},
+{time: '08:30', text: '💀 Customer database exfiltrated — 2.4M records (SSN, financial data)', type: 'critical'},
+{time: '10:00', text: '💀 Ransomware deployed across 5,000 endpoints via vendor management tool', type: 'critical'},
+{time: '12:00', text: '💀 SUPPLY CHAIN ATTACK COMPLETE — Total damage: $28.5M', type: 'critical'}
+];
+
+document.getElementById('nodeVendor').className = 'sc-node comp';
+document.getElementById('nodeVendor').querySelector('.status-indicator').className = 'status-indicator comp';
+document.getElementById('nodeCorporate').className = 'sc-node comp';
+document.getElementById('nodeCorporate').querySelector('.status-indicator').className = 'status-indicator comp';
+document.getElementById('nodeClient').className = 'sc-node comp';
+document.getElementById('nodeClient').querySelector('.status-indicator').className = 'status-indicator comp';
+
+let idx = 0;
+const interval = setInterval(() => {
+if(idx >= events.length){ clearInterval(interval); return; }
+const ev = events[idx];
+const div = document.createElement('div');
+div.className = 'tl-event ' + ev.type;
+div.innerHTML = '<span class="time">[' + ev.time + ']</span>' + ev.text;
+timeline.appendChild(div);
+timeline.scrollTop = timeline.scrollHeight;
+idx++;
+}, 1500);
+}
+
+function resetSC(){
+attackRunning = false;
+document.getElementById('timeline').innerHTML = '<div class="tl-event info"><span class="time">[00:00]</span>🔍 Supply chain monitoring active</div><div class="tl-event success"><span class="time">[00:00]</span>✅ All vendors compliant with security policies</div>';
+document.getElementById('nodeVendor').className = 'sc-node';
+document.getElementById('nodeVendor').querySelector('.status-indicator').className = 'status-indicator safe';
+document.getElementById('nodeCorporate').className = 'sc-node';
+document.getElementById('nodeCorporate').querySelector('.status-indicator').className = 'status-indicator safe';
+document.getElementById('nodeClient').className = 'sc-node';
+document.getElementById('nodeClient').querySelector('.status-indicator').className = 'status-indicator safe';
+}
+</script>
+</body>
+</html>

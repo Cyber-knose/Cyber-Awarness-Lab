@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incident Response Simulator | Cyber Awareness Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#07111D;color:#D8E2EB;overflow-x:hidden;font-weight:300;line-height:1.8;}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.3;pointer-events:none;}
+header{
+padding:18px 30px;text-align:center;
+background:rgba(7,17,29,0.85);backdrop-filter:blur(12px);
+border-bottom:1px solid rgba(75,107,138,0.18);position:sticky;top:0;z-index:100;
+}
+header h1{font-size:22px;font-weight:500;letter-spacing:0.08em;color:#D8E2EB;}
+header p{font-size:12px;color:#6A7E90;font-weight:400;letter-spacing:0.06em;margin-top:4px;}
+.container{max-width:1000px;margin:0 auto;padding:30px 20px;}
+.card{
+background:rgba(255,255,255,0.02);backdrop-filter:blur(10px);
+border:1px solid rgba(75,107,138,0.10);border-radius:8px;
+padding:24px;margin-bottom:20px;
+}
+.card h2{font-size:17px;font-weight:500;letter-spacing:0.06em;color:#D8E2EB;margin-bottom:12px;}
+.card h2 span{color:#4A6B8A;font-weight:300;font-size:12px;margin-left:6px;}
+
+/* Incident Timeline */
+.timeline{position:relative;padding-left:30px;margin:16px 0;}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:rgba(75,107,138,0.15);}
+.timeline-step{margin-bottom:14px;position:relative;}
+.timeline-step::before{content:'';position:absolute;left:-26px;top:6px;width:10px;height:10px;border-radius:50%;background:#0D1421;border:1.5px solid rgba(75,107,138,0.2);}
+.timeline-step.completed::before{background:#5B8C5A;border-color:#5B8C5A;}
+.timeline-step.active::before{background:#7CB9E8;border-color:#7CB9E8;box-shadow:0 0 8px rgba(90,155,213,0.3);}
+.timeline-step .step-title{font-size:13px;font-weight:500;color:#D8E2EB;letter-spacing:0.04em;}
+.timeline-step .step-desc{font-size:11px;color:#6A7E90;font-weight:300;margin-top:2px;}
+.timeline-step .step-status{font-size:10px;font-weight:400;padding:1px 6px;border-radius:2px;margin-left:8px;text-transform:uppercase;letter-spacing:0.06em;}
+.timeline-step .step-status.complete{background:rgba(91,140,90,0.06);color:#8BB58A;}
+.timeline-step .step-status.pending{background:rgba(196,163,90,0.06);color:#C4A35A;}
+
+/* Buttons */
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+.btn{
+padding:9px 20px;border-radius:4px;border:1px solid rgba(75,107,138,0.2);
+background:rgba(74,107,138,0.08);color:#A0B4C6;
+font-size:12px;font-weight:400;letter-spacing:0.06em;text-transform:uppercase;
+cursor:pointer;transition:all 0.25s;font-family:'Inter',sans-serif;
+}
+.btn:hover{background:rgba(74,107,138,0.15);border-color:rgba(75,107,138,0.3);color:#D8E2EB;}
+.btn.primary{background:rgba(90,155,213,0.1);border-color:rgba(90,155,213,0.2);color:#7CB9E8;}
+.btn.primary:hover{background:rgba(90,155,213,0.18);}
+.btn.danger{background:rgba(163,90,90,0.08);border-color:rgba(163,90,90,0.15);color:#C48A8A;}
+.btn.danger:hover{background:rgba(163,90,90,0.15);}
+.btn.success{background:rgba(91,140,90,0.08);border-color:rgba(91,140,90,0.15);color:#8BB58A;}
+.btn.success:hover{background:rgba(91,140,90,0.15);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* Status Grid */
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0;}
+.status-item{background:rgba(255,255,255,0.01);border:1px solid rgba(75,107,138,0.06);border-radius:5px;padding:12px;text-align:center;}
+.status-label{font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#4A6B8A;font-weight:400;}
+.status-value{font-size:18px;font-weight:500;color:#D8E2EB;margin-top:2px;}
+.status-value.critical{color:#C48A8A;}
+.status-value.warning{color:#C4A35A;}
+.status-value.normal{color:#8BB58A;}
+
+/* Console */
+.console{
+background:#060B14;border:1px solid rgba(75,107,138,0.08);
+border-radius:5px;padding:12px;height:150px;overflow-y:auto;
+font-family:'Courier New',monospace;font-size:11px;color:#6A7E90;margin:14px 0;line-height:1.6;
+}
+.console .line{margin:2px 0;}
+.console .warn{color:#C4A35A;}
+.console .info{color:#7CB9E8;}
+.console .alert{color:#C48A8A;}
+.console .success{color:#8BB58A;}
+
+/* Summary Report */
+.report-box{background:rgba(74,107,138,0.03);border:1px solid rgba(75,107,138,0.1);border-radius:5px;padding:16px;}
+.report-box h3{font-size:14px;font-weight:500;color:#D8E2EB;margin-bottom:8px;}
+.report-box .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#6A7E90;border-bottom:1px solid rgba(75,107,138,0.04);}
+.report-box .row:last-child{border-bottom:none;}
+.report-box .row span:last-child{color:#D8E2EB;font-weight:400;}
+
+footer{
+padding:24px;text-align:center;border-top:1px solid rgba(75,107,138,0.06);
+font-size:11px;color:#4A6B8A;letter-spacing:0.06em;
+}
+.back-link{
+display:inline-flex;align-items:center;gap:6px;
+color:#7CB9E8;text-decoration:none;font-size:12px;font-weight:400;
+margin-bottom:16px;letter-spacing:0.05em;
+}
+.back-link:hover{color:#A0C4E8;}
+@media(max-width:600px){.status-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<header>
+<h1>🚨 Incident Response Simulator</h1>
+<p>Walk through the full incident response lifecycle — identification to recovery</p>
+</header>
+<div class="container">
+<a href="index.html" class="back-link">← Back to Command Center</a>
+
+<div class="card">
+<h2>Incident Lifecycle <span>— Follow each phase in order</span></h2>
+<div class="btn-group">
+<button class="btn primary" id="startBtn">▶ Start Simulation</button>
+<button class="btn danger" id="resetBtn">⟲ Reset Incident</button>
+</div>
+<div class="timeline" id="timeline">
+<div class="timeline-step" data-step="1">
+<div class="step-title">1. Identification <span class="step-status">Pending</span></div>
+<div class="step-desc">Detect and recognize that a security incident has occurred</div>
+</div>
+<div class="timeline-step" data-step="2">
+<div class="step-title">2. Containment <span class="step-status">Pending</span></div>
+<div class="step-desc">Isolate affected systems to prevent further damage</div>
+</div>
+<div class="timeline-step" data-step="3">
+<div class="step-title">3. Eradication <span class="step-status">Pending</span></div>
+<div class="step-desc">Remove the threat and eliminate root cause</div>
+</div>
+<div class="timeline-step" data-step="4">
+<div class="step-title">4. Recovery <span class="step-status">Pending</span></div>
+<div class="step-desc">Restore systems to normal operations</div>
+</div>
+<div class="timeline-step" data-step="5">
+<div class="step-title">5. Lessons Learned <span class="step-status">Pending</span></div>
+<div class="step-desc">Document findings and improve future response</div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>System Status Dashboard</h2>
+<div class="status-grid">
+<div class="status-item"><div class="status-label">Incident Phase</div><div class="status-value" id="phaseDisplay">—</div></div>
+<div class="status-item"><div class="status-label">Threat Level</div><div class="status-value critical" id="threatDisplay">CRITICAL</div></div>
+<div class="status-item"><div class="status-label">Affected Systems</div><div class="status-value" id="systemsDisplay">12</div></div>
+<div class="status-item"><div class="status-label">Response Time</div><div class="status-value" id="timeDisplay">0m</div></div>
+</div>
+<div class="console" id="logConsole">
+<div class="line info">> Incident response system initialized. Monitoring for threats...</div>
+</div>
+</div>
+
+<div class="card">
+<h2>Post-Incident Summary</h2>
+<div class="report-box" id="summaryBox">
+<h3>No incident data available</h3>
+<p style="font-size:12px;color:#6A7E90;margin-top:6px;">Start a simulation to generate an incident report with findings and recommendations.</p>
+</div>
+</div>
+</div>
+
+<footer>Cyber Awareness Lab · Command Center · Educational Simulation Only</footer>
+
+<script>
+// Background
+(function(){
+const c=document.getElementById('bg'),ctx=c.getContext('2d');
+let w,h,cols,drops=[];
+function r(){w=c.width=innerWidth;h=c.height=innerHeight;cols=Math.floor(w/12);drops=[];for(let i=0;i<cols;i++)drops.push(Math.floor(Math.random()*h/12));}
+r();onresize=r;
+const ch='0123456789ABCDEF';
+setInterval(()=>{
+ctx.fillStyle='rgba(7,17,29,0.04)';ctx.fillRect(0,0,w,h);
+ctx.fillStyle='rgba(74,107,138,0.25)';ctx.font='12px monospace';
+for(let i=0;i<drops.length;i++){
+const t=ch[Math.floor(Math.random()*ch.length)];
+ctx.fillText(t,i*12,drops[i]*12);
+if(drops[i]*12>h&&Math.random()>0.98)drops[i]=0;drops[i]++;
+}
+},50);
+})();
+
+const logEl=document.getElementById('logConsole');
+const startBtn=document.getElementById('startBtn');
+const resetBtn=document.getElementById('resetBtn');
+const phaseDisplay=document.getElementById('phaseDisplay');
+const threatDisplay=document.getElementById('threatDisplay');
+const systemsDisplay=document.getElementById('systemsDisplay');
+const timeDisplay=document.getElementById('timeDisplay');
+const summaryBox=document.getElementById('summaryBox');
+let running=false,phase=0,startTime=0;
+const phases=[
+{name:'Identification',desc:'Anomaly detected in network traffic — unusual outbound connections from finance department'},
+{name:'Containment',desc:'Isolating affected workstations — disconnecting network segment 192.168.14.0/24'},
+{name:'Eradication',desc:'Removing malicious artifacts — cleaning registry entries and scheduled tasks'},
+{name:'Recovery',desc:'Restoring systems from clean backups — verifying data integrity'},
+{name:'Lessons Learned',desc:'Incident report compiled — updating security policies and firewall rules'}
+];
+const stepEls=document.querySelectorAll('.timeline-step');
+
+function log(msg,type='info'){
+const d=document.createElement('div');d.className='line '+type;
+d.textContent='> '+msg;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;
+}
+
+function updatePhase(p){
+phase=p;
+const phaseData=phases[phase-1];
+stepEls.forEach((el,i)=>{
+const idx=parseInt(el.dataset.step);
+el.classList.remove('active','completed');
+const statusEl=el.querySelector('.step-status');
+if(idx<phase){el.classList.add('completed');statusEl.textContent='Complete';statusEl.className='step-status complete';}
+else if(idx===phase){el.classList.add('active');statusEl.textContent='In Progress';statusEl.className='step-status pending';}
+else{statusEl.textContent='Pending';statusEl.className='step-status pending';}
+});
+phaseDisplay.textContent=phaseData.name;
+const elapsed=Math.floor((Date.now()-startTime)/1000);
+timeDisplay.textContent=elapsed+'s';
+if(phase<3)threatDisplay.textContent='CRITICAL';
+else if(phase<5)threatDisplay.textContent='ELEVATED';
+else threatDisplay.textContent='STABLE';
+systemsDisplay.textContent=Math.max(12-phase*2,2);
+}
+
+function runSimulation(){
+if(running)return;
+running=true;startBtn.disabled=true;
+startTime=Date.now();
+log('🚨 Incident detected! Unauthorized access pattern identified.','alert');
+log('Initiating incident response protocol...','warn');
+setTimeout(()=>{updatePhase(1);log('🔍 Phase 1: Identification — '+phases[0].desc,'info');log('Source IP: 185.220.101.x | Port scan detected on 10 workstations','warn');},500);
+setTimeout(()=>{updatePhase(2);log('🔒 Phase 2: Containment — '+phases[1].desc,'warn');log('Network ACL updated — traffic blocked from affected segment','alert');},4000);
+setTimeout(()=>{updatePhase(3);log('🧹 Phase 3: Eradication — '+phases[2].desc,'info');log('Removed 3 malicious processes: svchost.tmp, updater.dll, winlogon.bak','success');},7000);
+setTimeout(()=>{updatePhase(4);log('🔄 Phase 4: Recovery — '+phases[3].desc,'info');log('Systems restored. Verifying integrity of recovered data...','success');},10000);
+setTimeout(()=>{
+updatePhase(5);
+log('📋 Phase 5: Lessons Learned — '+phases[4].desc,'success');
+log('✅ Incident resolved. Total response time: '+timeDisplay.textContent,'success');
+// Show summary
+summaryBox.innerHTML='<h3>📋 Incident Summary Report</h3>'+
+'<div class="row"><span>Incident ID</span><span>IR-2026-0'+Math.floor(Math.random()*99)+'</span></div>'+
+'<div class="row"><span>Classification</span><span>Unauthorized Access (MITRE T1078)</span></div>'+
+'<div class="row"><span>Severity</span><span style="color:#C48A8A;">Critical</span></div>'+
+'<div class="row"><span>Affected Systems</span><span>'+systemsDisplay.textContent+' endpoints</span></div>'+
+'<div class="row"><span>Response Time</span><span>'+timeDisplay.textContent+'</span></div>'+
+'<div class="row"><span>Containment Method</span><span>Network isolation + process termination</span></div>'+
+'<div class="row"><span>Root Cause</span><span>Phishing link executed by user (Finance Dept)</span></div>'+
+'<div class="row"><span>Recommendation</span><span style="color:#A0C4E8;">Deploy endpoint detection + user awareness training</span></div>'+
+'<div class="row"><span>Status</span><span style="color:#8BB58A;">✅ Resolved — No data exfiltrated</span></div>';
+running=false;
+},13000);
+}
+
+function resetSimulation(){
+if(running)return;
+phase=0;
+stepEls.forEach(el=>{el.classList.remove('active','completed');el.querySelector('.step-status').textContent='Pending';el.querySelector('.step-status').className='step-status pending';});
+phaseDisplay.textContent='—';
+threatDisplay.textContent='CRITICAL';
+systemsDisplay.textContent='12';
+timeDisplay.textContent='0m';
+startBtn.disabled=false;
+logEl.innerHTML='<div class="line info">> Incident response system initialized. Monitoring for threats...</div>';
+summaryBox.innerHTML='<h3>No incident data available</h3><p style="font-size:12px;color:#6A7E90;margin-top:6px;">Start a simulation to generate an incident report with findings and recommendations.</p>';
+}
+
+startBtn.onclick=runSimulation;
+resetBtn.onclick=resetSimulation;
+</script>
+</body>
+</html>
+

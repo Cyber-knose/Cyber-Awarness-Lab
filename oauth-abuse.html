@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OAuth Permission Abuse | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #aa44ff;}
+header h1{color:#aa44ff;font-size:34px;text-shadow:0 0 20px #aa44ff;}
+header p{color:#cc88ff;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #aa44ff;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#aa44ff;margin-bottom:15px;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.oauth-demo{background:#0a0a0a;border:1px solid #333;border-radius:12px;padding:20px;margin:15px 0;}
+.permission-list{list-style:none;padding:0;}
+.permission-item{display:flex;align-items:center;gap:12px;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #333;transition:.3s;}
+.permission-item:hover{border-color:#aa44ff;}
+.permission-item .icon{font-size:20px;}
+.permission-item .info{flex:1;}
+.permission-item .info .name{font-weight:bold;}
+.permission-item .info .desc{color:#888;font-size:12px;}
+.permission-item .toggle{width:40px;height:22px;border-radius:11px;background:#333;cursor:pointer;position:relative;transition:.3s;}
+.permission-item .toggle.active{background:#aa44ff;}
+.permission-item .toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.3s;}
+.permission-item .toggle.active::after{left:20px;}
+.permission-item.danger{background:rgba(255,0,0,.05);border-color:#ff4444;}
+.permission-item.danger .toggle{background:#ff4444;}
+
+.app-card{background:#111;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;text-align:center;}
+.app-card .app-icon{font-size:48px;margin-bottom:10px;}
+.app-card .app-name{font-size:18px;font-weight:bold;}
+.app-card .app-desc{color:#888;font-size:13px;margin-top:5px;}
+.app-card .badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;margin-top:8px;}
+.app-card .badge.malicious{background:#2a0000;color:#ff4444;border:1px solid #ff4444;}
+.app-card .badge.legit{background:#002a00;color:#00ff66;border:1px solid #00ff66;}
+
+.btn{background:#aa44ff;color:#fff;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #aa44ff;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+
+.result-box{padding:15px;border-radius:8px;margin:15px 0;display:none;}
+.result-box.success{background:#002a00;border:1px solid #00ff66;color:#00ff66;display:block;}
+.result-box.fail{background:#2a0000;border:1px solid #ff4444;color:#ff4444;display:block;}
+.result-box.info{background:#1a002a;border:1px solid #aa44ff;color:#cc88ff;display:block;}
+
+.token-display{background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin:10px 0;font-family:Consolas,monospace;font-size:11px;word-break:break-all;}
+.token-display .label{color:#aa44ff;}
+.token-display .value{color:#aaa;}
+
+.tip-box{background:#1a002a;border-left:4px solid #aa44ff;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #aa44ff;color:#cc88ff;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>🔐 OAuth Permission Abuse Lab</h1>
+<p>Learn how attackers abuse OAuth tokens and overly permissive scopes</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>🔐 OAuth Token Scope Exploitation</h2>
+<p class="desc">OAuth permission abuse occurs when an attacker tricks users into granting an application excessive permissions, then uses those tokens to access sensitive data or perform unauthorized actions on the user's behalf.</p>
+
+<div class="oauth-demo">
+<div class="app-card" style="border-color:#ff4444;">
+<div class="app-icon">🎮</div>
+<div class="app-name">"Cute Cat Quiz"</div>
+<div class="app-desc">A simple quiz app that asks for Google sign-in to save your score</div>
+<span class="badge malicious">⚠️ MALICIOUS APP</span>
+</div>
+
+<h3 style="color:#aa44ff;margin:20px 0 10px;">📋 Requested Permissions:</h3>
+<div class="permission-list">
+<div class="permission-item" id="perm1">
+<span class="icon">👤</span>
+<div class="info"><div class="name">View your email address</div><div class="desc">See your primary Google account email address</div></div>
+<div class="toggle active" onclick="togglePerm(this, 'perm1')"></div>
+</div>
+<div class="permission-item" id="perm2">
+<span class="icon">📁</span>
+<div class="info"><div class="name">View your Google Drive files</div><div class="desc">Read, create, and delete files in your Google Drive</div></div>
+<div class="toggle active" onclick="togglePerm(this, 'perm2')"></div>
+</div>
+<div class="permission-item" id="perm3">
+<span class="icon">📧</span>
+<div class="info"><div class="name">Read your email (Gmail)</div><div class="desc">Read, send, delete, and manage your email</div></div>
+<div class="toggle active" onclick="togglePerm(this, 'perm3')"></div>
+</div>
+<div class="permission-item" id="perm4">
+<span class="icon">👥</span>
+<div class="info"><div class="name">View your contacts</div><div class="desc">See who you communicate with most</div></div>
+<div class="toggle active" onclick="togglePerm(this, 'perm4')"></div>
+</div>
+<div class="permission-item" id="perm5">
+<span class="icon">🗓️</span>
+<div class="info"><div class="name">Manage your calendar</div><div class="desc">View, edit, and delete calendar events</div></div>
+<div class="toggle active" onclick="togglePerm(this, 'perm5')"></div>
+</div>
+<div class="permission-item" id="perm6" style="background:rgba(255,0,0,.05);border-color:#ff4444;">
+<span class="icon">🔑</span>
+<div class="info"><div class="name" style="color:#ff4444;">⚠️ Refresh tokens (offline access)</div><div class="desc">App can access data even when you're offline — unlimited time</div></div>
+<div class="toggle active" id="dangerToggle" style="background:#ff4444;" onclick="togglePerm(this, 'perm6')"></div>
+</div>
+</div>
+
+<button class="btn danger" onclick="showAbuse()">⚠️ "Sign in with Google" (Malicious)</button>
+<button class="btn" onclick="revokeAccess()">🚫 Revoke Access</button>
+
+<div id="oauthResult" class="result-box"></div>
+</div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ OAuth Security</h2>
+<div class="tip-box">
+<strong>🛡️ How to Protect Against OAuth Abuse:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔐 Review permissions carefully before granting access</li>
+<li>🔐 Use the principle of least privilege — grant only what's needed</li>
+<li>🔐 Regularly audit connected apps in Google/Facebook/Microsoft accounts</li>
+<li>🔐 Revoke access for apps you no longer use</li>
+<li>🔐 Be suspicious of apps requesting offline access (refresh tokens)</li>
+<li>🔐 Use scoped access tokens with short expiration times</li>
+<li>🔐 Implement Proof Key for Code Exchange (PKCE) for public clients</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#aa44ff";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+function togglePerm(el, id){
+el.classList.toggle('active');
+const item = document.getElementById(id);
+if(el.classList.contains('active')){
+item.style.opacity = '1';
+} else {
+item.style.opacity = '0.5';
+}
+}
+
+function showAbuse(){
+const result = document.getElementById('oauthResult');
+result.style.display = 'block';
+result.className = 'result-box fail';
+result.innerHTML = '💀 <strong>OAuth Token Abuse Demonstrated!</strong><br><br>'+
+'🔑 <strong>Access Token Granted:</strong><br>'+
+'<div class="token-display"><span class="label">🔑 Access Token:</span><br><span class="value">ya29.a0AfH6SMB8Kvz3Q2xG5Rp9Nc7Lm4Jh8Wt1Vb6Xd3Yf5Cg7E</span></div>'+
+'<div class="token-display"><span class="label">🔄 Refresh Token:</span><br><span class="value">1//0c7Dm4Kh8Wt1Vb6Xd3Yf5Cg7E.4Jh8Wt1Vb6Xd3Yf5Cg7E</span></div>'+
+'<br><strong style="color:#ff4444;">Malicious actions performed by "Cute Cat Quiz":</strong><br>'+
+'📁 Downloaded all Google Drive files (200+ documents)<br>'+
+'📧 Read 1,500+ emails — harvested password reset emails<br>'+
+'👥 Exported full contact list (2,400 contacts)<br>'+
+'🗓️ Scraped calendar — identified meeting patterns for spear phishing<br>'+
+'🔑 Refresh token allows continued access even after password change!<br><br>'+
+'<em>⚠️ All because the user didn\'t read the permission scopes!</em>';
+}
+
+function revokeAccess(){
+const result = document.getElementById('oauthResult');
+result.style.display = 'block';
+result.className = 'result-box success';
+result.innerHTML = '✅ <strong>OAuth Access Revoked!</strong><br><br>'+
+'🚫 "Cute Cat Quiz" has been removed from your connected apps<br>'+
+'🔄 All access and refresh tokens have been invalidated<br>'+
+'🔒 The malicious app can no longer access your data<br><br>'+
+'<strong>To review connected apps in your real accounts:</strong><br>'+
+'🔐 Google: myaccount.google.com/permissions<br>'+
+'🔐 Facebook: facebook.com/settings?tab=applications<br>'+
+'🔐 Microsoft: account.microsoft.com/security';
+}
+</script>
+</body>
+</html>

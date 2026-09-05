@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worm Propagation | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #ff8800;}
+header h1{color:#ff8800;font-size:34px;text-shadow:0 0 20px #ff8800;font-family:'Orbitron',sans-serif;}
+header p{color:#ffcc88;margin-top:8px;}
+.container{max-width:1100px;margin:30px auto;padding:20px;}
+.card{background:rgba(255,255,255,.05);border:1px solid #ff8800;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.card h2{color:#ff8800;margin-bottom:15px;font-family:'Orbitron',sans-serif;}
+.network-canvas{width:100%;height:400px;background:#0a0a0a;border-radius:12px;border:1px solid #ff8800;display:block;}
+.controls{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0;}
+.btn{background:#ff8800;color:#000;border:none;padding:12px 25px;font-weight:bold;border-radius:8px;cursor:pointer;transition:.3s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.05);box-shadow:0 0 20px #ff8800;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-reset{background:#00ff66;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:15px 0;}
+.stat-box{background:#111;border:1px solid #ff8800;border-radius:10px;padding:15px;text-align:center;}
+.stat-box h3{color:#ffcc88;font-size:13px;margin-bottom:5px;}
+.stat-box span{font-size:28px;font-weight:bold;color:#ff8800;}
+.log-box{background:#0a0a0a;border:1px solid #ff8800;border-radius:8px;padding:15px;height:180px;overflow-y:auto;font-family:Consolas,monospace;color:#ffaa44;margin:15px 0;}
+.log-box .line{margin:3px 0;font-size:13px;}
+.node-info{background:#111;border:1px solid #333;border-radius:8px;padding:12px;margin:10px 0;display:none;}
+.node-info.visible{display:block;}
+.tip-box{background:#0a1a0a;border-left:4px solid #00ff66;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #ff8800;color:#ffcc88;}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<header>
+<h1>🪱 Worm Propagation Simulation</h1>
+<p>Watch how a self-replicating worm spreads across a network</p>
+</header>
+<div class="container">
+<div class="card">
+<h2>🌐 Network Map</h2>
+<canvas id="netCanvas" class="network-canvas"></canvas>
+<div class="controls">
+<button class="btn" id="startBtn" onclick="startWorm()">▶️ Release Worm</button>
+<button class="btn btn-reset" onclick="resetSim()">🔄 Reset Network</button>
+</div>
+<div class="stats">
+<div class="stat-box"><h3>Total Nodes</h3><span id="totalNodes">25</span></div>
+<div class="stat-box"><h3>Infected</h3><span id="infectedCount" style="color:#ff4444;">0</span></div>
+<div class="stat-box"><h3>🛡️ Patched</h3><span id="patchedCount" style="color:#00ff66;">0</span></div>
+<div class="stat-box"><h3>Speed</h3><span id="spreadSpeed">0</span></div>
+</div>
+<div class="node-info" id="nodeInfo"><strong>Node Info:</strong> <span id="nodeDetail">Click a node</span></div>
+</div>
+<div class="card">
+<h2>📋 Infection Log</h2>
+<div class="log-box" id="logBox"></div>
+</div>
+<div class="card">
+<h2>🛡️ How Worms Spread & How to Stop Them</h2>
+<div class="tip-box">
+<ul style="line-height:2.2;margin-left:20px;">
+<li>✔ Worms self-replicate without user interaction (unlike Trojans)</li>
+<li✔ They exploit unpatched vulnerabilities to jump between machines</li>
+<li>✔ The 2017 WannaCry worm infected 230,000+ computers in one day</li>
+<li>✔ Patch management is the #1 defense against worms</li>
+<li>✔ Network segmentation limits lateral movement</li>
+<li>✔ EDR (Endpoint Detection & Response) tools detect worm behavior</li>
+<li>✔ Disable SMBv1, unused ports, and unnecessary services</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Educational Simulation Only</footer>
+<script>
+// Matrix bg
+const bg=document.getElementById("bg");const bctx=bg.getContext("2d");
+bg.width=window.innerWidth;bg.height=window.innerHeight;
+const c="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cls=Math.floor(bg.width/sz);const dr=Array(cls).fill(1);
+function drawM(){bctx.fillStyle="rgba(0,0,0,0.05)";bctx.fillRect(0,0,bg.width,bg.height);bctx.fillStyle="#ff8800";bctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=c[Math.floor(Math.random()*c.length)];bctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>bg.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(drawM,35);
+window.onresize=()=>{bg.width=window.innerWidth;bg.height=window.innerHeight;};
+
+// Network simulation
+const nCanvas=document.getElementById("netCanvas");
+const ctx=nCanvas.getContext("2d");
+let W=nCanvas.width=800,H=nCanvas.height=400;
+
+let nodes=[],edges=[],infected=new Set(),patched=new Set(),running=false,animId;
+const logBox=document.getElementById("logBox");
+const startBtn=document.getElementById("startBtn");
+
+function resizeNet(){W=nCanvas.width=nCanvas.clientWidth;H=nCanvas.height=400;initNetwork();}
+window.addEventListener("resize",resizeNet);
+
+function initNetwork(){
+const numNodes=25;nodes=[];edges=[];infected=new Set();patched=new Set();
+for(let i=0;i<numNodes;i++){
+nodes.push({id:i,x:40+Math.random()*(W-80),y:30+Math.random()*(H-60),infected:false,patched:Math.random()<0.2});
+if(nodes[i].patched)patched.add(i);
+}
+// Create network topology (small world)
+for(let i=0;i<numNodes;i++){
+const connections=2+Math.floor(Math.random()*3);
+for(let j=0;j<connections;j++){
+const t=(i+1+Math.floor(Math.random()*(numNodes-1)))%numNodes;
+if(t!==i&&!edges.find(e=>(e[0]===i&&e[1]===t)||(e[0]===t&&e[1]===i)))edges.push([i,t]);
+}
+}
+updateStats();
+drawNetwork();
+}
+
+function drawNetwork(){
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle="#0a0a0a";ctx.fillRect(0,0,W,H);
+// edges
+ctx.strokeStyle="#222";ctx.lineWidth=1;
+edges.forEach(e=>{
+const n1=nodes[e[0]],n2=nodes[e[1]];
+const infected1=infected.has(e[0]),infected2=infected.has(e[1]);
+if(infected1||infected2){ctx.strokeStyle="rgba(255,68,68,0.4)";ctx.lineWidth=2;}
+else{ctx.strokeStyle="#333";ctx.lineWidth=1;}
+ctx.beginPath();ctx.moveTo(n1.x,n1.y);ctx.lineTo(n2.x,n2.y);ctx.stroke();
+});
+// nodes
+nodes.forEach(n=>{
+ctx.beginPath();
+ctx.arc(n.x,n.y,12,0,Math.PI*2);
+if(infected.has(n.id)){ctx.fillStyle="#ff4444";ctx.shadowColor="#ff4444";ctx.shadowBlur=15;}
+else if(n.patched){ctx.fillStyle="#00ff66";ctx.shadowColor="#00ff66";ctx.shadowBlur=8;}
+else{ctx.fillStyle="#335566";ctx.shadowBlur=0;}
+ctx.fill();ctx.shadowBlur=0;
+ctx.strokeStyle="#555";ctx.lineWidth=1;ctx.stroke();
+ctx.fillStyle="#fff";ctx.font="8px Arial";ctx.textAlign="center";ctx.fillText(n.id,n.x,n.y+3);
+});
+}
+
+function spreadWorm(){
+const newInfected=new Set();
+infected.forEach(id=>{
+nodes[id].infected=true;
+edges.forEach(e=>{
+const neighbor=e[0]===id?e[1]:e[1]===id?e[0]:-1;
+if(neighbor>=0&&!infected.has(neighbor)&&!patched.has(neighbor)&&Math.random()<0.4){
+newInfected.add(neighbor);
+const t=new Date().toLocaleTimeString();
+addLog(`🪱 ${t} - Node ${neighbor} infected by Node ${id} (SMB exploit)`);
+}
+});
+});
+newInfected.forEach(id=>{infected.add(id);nodes[id].infected=true;});
+updateStats();drawNetwork();
+if(infected.size>=nodes.length-patched.size){clearInterval(animId);addLog("🏁 All vulnerable nodes infected!");running=false;startBtn.disabled=false;return;}
+if(newInfected.size===0&&infected.size>0){clearInterval(animId);addLog("⏸️ Spread halted - no vulnerable nodes reachable");running=false;startBtn.disabled=false;}
+}
+
+function startWorm(){
+if(running)return;running=true;startBtn.disabled=true;
+if(infected.size===0){
+const first=Math.floor(Math.random()*nodes.length);
+infected.add(first);nodes[first].infected=true;
+addLog(`🪱 Worm released on Node ${first}`);
+}
+animId=setInterval(spreadWorm,800);
+document.getElementById("spreadSpeed").textContent=infected.size>1?"ACTIVE":"SLOW";
+}
+
+function resetSim(){
+if(animId)clearInterval(animId);running=false;startBtn.disabled=false;
+infected.clear();initNetwork();logBox.innerHTML="";
+document.getElementById("spreadSpeed").textContent="0";
+addLog("🔄 Network reset to initial state");
+}
+
+function updateStats(){
+document.getElementById("infectedCount").textContent=infected.size;
+document.getElementById("patchedCount").textContent=patched.size;
+}
+
+function addLog(msg){const d=document.createElement("div");d.className="line";d.textContent=msg;logBox.appendChild(d);logBox.scrollTop=logBox.scrollHeight;}
+
+nCanvas.addEventListener("click",e=>{
+const r=nCanvas.getBoundingClientRect();
+const mx=e.clientX-r.left,my=e.clientY-r.top;
+const info=document.getElementById("nodeInfo");const detail=document.getElementById("nodeDetail");
+let found=false;
+nodes.forEach(n=>{
+const dx=n.x-mx,dy=n.y-my;
+if(dx*dx+dy*dy<225){
+found=true;
+info.classList.add("visible");
+let status="🟢 Clean";
+if(infected.has(n.id))status="🔴 Infected";
+else if(n.patched)status="🛡️ Patched/Immune";
+detail.innerHTML=`Node ${n.id} | Status: ${status} | Connections: ${edges.filter(e=>e[0]===n.id||e[1]===n.id).length}`;
+}
+});
+if(!found)info.classList.remove("visible");
+});
+
+initNetwork();
+addLog("🌐 Network initialized with 25 nodes (5 patched/immune)");
+addLog("📌 Click a node for details. Press 'Release Worm' to start.");
+</script>
+</body>
+</html>

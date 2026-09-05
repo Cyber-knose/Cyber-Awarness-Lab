@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS Spoofing Simulator | Cyber Awareness Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',Consolas,monospace,sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+body{background:#050505;color:#fff;overflow-x:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+header{padding:25px;text-align:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-bottom:1px solid #00ff66;}
+header h1{color:#00ff66;font-size:34px;text-shadow:0 0 20px #00ff66;font-family:'Orbitron',sans-serif;}
+header p{color:#88ffaa;margin-top:8px;}
+.container{max-width:950px;margin:30px auto;padding:20px;}
+
+.lab-content{background:rgba(255,255,255,.05);border:1px solid #00ff66;border-radius:15px;padding:25px;margin-bottom:25px;backdrop-filter:blur(8px);}
+.lab-content h2{color:#00ff66;margin-bottom:15px;font-family:'Orbitron',sans-serif;}
+.lab-content .desc{color:#ddd;margin-bottom:20px;line-height:1.7;}
+
+.dns-table{width:100%;border-collapse:collapse;margin:15px 0;font-size:13px;}
+.dns-table th{background:#111;color:#00ff66;padding:10px;border:1px solid #333;text-align:left;}
+.dns-table td{padding:10px;border:1px solid #333;color:#ccc;}
+.dns-table tr.spoofed td{background:rgba(255,0,0,.05);color:#ff6666;}
+
+.dns-lookup{background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0;}
+.dns-url{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap;}
+.dns-url input{flex:1;padding:10px;background:#111;border:1px solid #333;color:#fff;border-radius:6px;min-width:200px;font-size:14px;}
+.dns-url input:focus{border-color:#00ff66;outline:none;}
+
+.btn{background:#00ff66;color:#000;border:none;padding:12px 24px;font-weight:bold;border-radius:6px;cursor:pointer;margin:5px;transition:.2s;font-family:'Orbitron',sans-serif;}
+.btn:hover{transform:scale(1.03);box-shadow:0 0 20px #00ff66;}
+.btn.danger{background:#ff4444;color:#fff;}
+.btn.danger:hover{box-shadow:0 0 20px #ff4444;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+.result-box{padding:15px;border-radius:8px;margin:15px 0;display:none;}
+.result-box.success{background:#002a00;border:1px solid #00ff66;color:#00ff66;display:block;}
+.result-box.fail{background:#2a0000;border:1px solid #ff4444;color:#ff4444;display:block;}
+.result-box.info{background:#001a00;border:1px solid #00ff66;color:#88ffaa;display:block;}
+
+.tip-box{background:#001a00;border-left:4px solid #00ff66;padding:15px;margin:15px 0;line-height:1.8;}
+footer{padding:25px;text-align:center;border-top:1px solid #00ff66;color:#88ffaa;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<header>
+<h1>🌐 DNS Spoofing Simulator</h1>
+<p>See how DNS cache poisoning redirects legitimate traffic to malicious sites</p>
+</header>
+<div class="container">
+<div class="lab-content">
+<h2>🌐 DNS Cache Poisoning Attack</h2>
+<p class="desc">DNS spoofing (also known as DNS cache poisoning) occurs when an attacker corrupts a DNS resolver's cache with false records, redirecting users to malicious websites without their knowledge.</p>
+
+<div class="dns-lookup">
+<h3 style="color:#00ff66;margin-bottom:15px;">🔍 DNS Lookup Simulator</h3>
+<div class="dns-url">
+<input type="text" id="dnsInput" value="www.mybank.com" placeholder="Enter a domain name...">
+<button class="btn" onclick="dnsLookup()">🔍 Lookup</button>
+<button class="btn danger" onclick="spoofDNS()">⚠️ Spoof DNS</button>
+</div>
+
+<table class="dns-table">
+<thead><tr><th>Domain</th><th>Type</th><th>Legitimate IP</th><th>Spoofed IP</th><th>Status</th></tr></thead>
+<tbody id="dnsTableBody">
+<tr><td>www.mybank.com</td><td>A</td><td>203.0.113.45</td><td style="color:#ff4444;">198.51.100.99</td><td style="color:#ff4444;">⚠️ SPOOFED</td></tr>
+<tr><td>mail.google.com</td><td>A</td><td>142.250.80.14</td><td>-</td><td style="color:#00ff66;">✅ Secure</td></tr>
+<tr><td>login.paypal.com</td><td>A</td><td>66.211.169.66</td><td style="color:#ff4444;">198.51.100.88</td><td style="color:#ff4444;">⚠️ SPOOFED</td></tr>
+<tr><td>www.github.com</td><td>A</td><td>140.82.121.3</td><td>-</td><td style="color:#00ff66;">✅ Secure</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="lookupResult" class="result-box"></div>
+</div>
+
+<div class="lab-content">
+<h2>🛡️ DNSSEC Protection</h2>
+<div class="tip-box">
+<strong>🛡️ How to Protect Against DNS Spoofing:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🔐 Use DNSSEC (DNS Security Extensions) to digitally sign DNS records</li>
+<li>🔐 Enable DNS over HTTPS (DoH) or DNS over TLS (DoT)</li>
+<li>🔐 Keep DNS server software updated against known vulnerabilities</li>
+<li>🔐 Use random source ports and transaction IDs (TXIDs)</li>
+<li>🔐 Implement response rate limiting on DNS resolvers</li>
+<li>🔐 Monitor for unusual DNS query patterns with anomaly detection</li>
+</ul>
+</div>
+<div class="tip-box" style="border-left-color:#ff4444;">
+<strong>🚨 Signs You May Be a Victim:</strong>
+<ul style="margin-left:20px;margin-top:8px;line-height:2.2;">
+<li>🌐 URL shows the correct domain but looks different in the browser</li>
+<li>🔒 SSL/TLS certificate warnings (mismatched domain)</li>
+<li>📧 Phishing pages load despite typing correct URLs</li>
+<li>💳 Unexpected payment gateways when visiting known sites</li>
+<li>🔍 Use 'nslookup' or 'dig' to verify IP resolution matches expected</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>Cyber Awareness Lab • Created by Priyanshu Jangra</footer>
+
+<script>
+const canvas=document.getElementById("matrix");const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";const sz=14;
+const cols=Math.floor(canvas.width/sz);const dr=Array(cols).fill(1);
+function draw(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#00ff66";ctx.font=sz+"px monospace";for(let i=0;i<dr.length;i++){const t=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(t,i*sz,dr[i]*sz);if(dr[i]*sz>canvas.height&&Math.random()>0.98)dr[i]=0;dr[i]++;}}
+setInterval(draw,35);
+window.onresize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;};
+
+let spoofed = true;
+const spoofDB = {
+'www.mybank.com': {real: '203.0.113.45', fake: '198.51.100.99'},
+'mail.google.com': {real: '142.250.80.14', fake: '198.51.100.77'},
+'login.paypal.com': {real: '66.211.169.66', fake: '198.51.100.88'},
+'www.github.com': {real: '140.82.121.3', fake: '198.51.100.55'}
+};
+
+function dnsLookup(){
+const input = document.getElementById('dnsInput').value.trim().toLowerCase();
+const r = document.getElementById('lookupResult');
+let found = null;
+for(const [domain, data] of Object.entries(spoofDB)){
+if(input.includes(domain) || domain.includes(input)){
+found = {domain, ...data}; break;
+}
+}
+if(found){
+const ip = spoofed ? found.fake : found.real;
+const isSpoofed = spoofed;
+r.className = 'result-box ' + (isSpoofed ? 'fail' : 'success');
+r.innerHTML = (isSpoofed ? 
+'⚠️ <strong>DNS Spoofed!</strong><br><br>'+
+'Domain: ' + found.domain + '<br>'+
+'Resolved IP: <strong style="color:#ff4444;">' + ip + '</strong> (malicious server)<br>'+
+'Expected IP: ' + found.real + '<br><br>'+
+'💀 Your traffic is being redirected to a fake site!' :
+'✅ <strong>DNS Resolution Secure</strong><br><br>'+
+'Domain: ' + found.domain + '<br>'+
+'Resolved IP: <strong style="color:#00ff66;">' + ip + '</strong> (legitimate server)<br><br>'+
+'🔒 Connection is safe.');
+} else {
+r.className = 'result-box info';
+r.innerHTML = '🌐 DNS query for "' + input + '"<br>'+
+'📡 Resolving via 8.8.8.8 (Google DNS)...<br>'+
+'❌ Domain not found in simulation database. Try: www.mybank.com';
+}
+}
+
+function spoofDNS(){
+spoofed = !spoofed;
+document.querySelectorAll('.dns-table tbody tr').forEach((row, i) => {
+const domains = Object.keys(spoofDB);
+if(i < domains.length){
+const domain = domains[i];
+const data = spoofDB[domain];
+const cells = row.cells;
+if(spoofed){
+cells[2].innerHTML = data.real;
+cells[3].innerHTML = data.fake;
+cells[3].style.color = '#ff4444';
+cells[4].innerHTML = '⚠️ SPOOFED';
+cells[4].style.color = '#ff4444';
+row.className = 'spoofed';
+} else {
+cells[2].innerHTML = data.real;
+cells[3].innerHTML = '-';
+cells[4].innerHTML = '✅ Secure';
+cells[4].style.color = '#00ff66';
+row.className = '';
+}
+}
+});
+const btn = document.querySelector('.btn.danger');
+btn.textContent = spoofed ? '⚠️ Spoof DNS' : '✅ Restore DNS';
+btn.style.background = spoofed ? '#ff4444' : '#00ff66';
+const r = document.getElementById('lookupResult');
+r.className = 'result-box ' + (spoofed ? 'fail' : 'success');
+r.innerHTML = spoofed ? 
+'⚠️ <strong>DNS Cache Poisoned!</strong> All traffic redirecting to attacker-controlled servers.' :
+'✅ <strong>DNS Restored!</strong> All records pointing to legitimate servers.';
+}
+</script>
+</body>
+</html>
