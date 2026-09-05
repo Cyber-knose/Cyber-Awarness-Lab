@@ -39,7 +39,7 @@ The project brings cybersecurity awareness, educational modules and practical se
 
 <div align="center">
 
-<img src=".png" alt="Cyber Awareness Lab Dashboard" width="950"/>
+<img src="dash1.jpg" alt="Cyber Awareness Lab Dashboard" width="950"/>
 
 </div>
 
@@ -49,31 +49,53 @@ The project brings cybersecurity awareness, educational modules and practical se
 
 <div align="center">
 
-<img src="assets/modules.png" alt="Cyber Awareness Modules" width="950"/>
+<img src="cy10.png" alt="Cyber Awareness Modules" width="950"/>
 
 </div>
 
 ---
-
-## 🔐 Security Tools
 
 <div align="center">
 
-<img src="assets/tools.png" alt="Cybersecurity Tools" width="950"/>
+<img src="cy11.png" alt="Cyber Awareness Modules" width="950"/>
 
 </div>
 
----
 
-## 📊 Security Dashboard
+---
 
 <div align="center">
 
-<img src="assets/dashboard-2.png" alt="Security Dashboard" width="950"/>
+<img src="cy12.png" alt="Cyber Awareness Modules" width="950"/>
 
 </div>
 
----
+--
+
+<div align="center">
+
+<img src="cy13.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
+
+--
+
+<div align="center">
+
+<img src="cy9.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
+
+--
+
+<div align="center">
+
+<img src="cy3.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
+
+
+
 
 # 🚀 Key Features
 
