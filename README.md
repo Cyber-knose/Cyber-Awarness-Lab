@@ -94,6 +94,35 @@ The project brings cybersecurity awareness, educational modules and practical se
 
 </div>
 
+<div align="center">
+
+<img src="cy4.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
+
+<div align="center">
+
+<img src="cy5.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
+
+<div align="center">
+
+<img src="cy6.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
+
+<div align="center">
+
+<img src="cy7.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
+
+<div align="center">
+
+<img src="cy8.png" alt="Cyber Awareness Modules" width="950"/>
+
+</div>
 
 
 
