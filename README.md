@@ -380,27 +380,6 @@ help reduce overall risk.
 
 ---
 
-# 🛡️ Cyber Safety Framework
-
-Cyber Awareness Lab follows a simple approach:
-
-```text
-┌──────────────┐
-│   IDENTIFY   │
-└──────┬───────┘
-       ↓
-┌──────────────┐
-│  UNDERSTAND  │
-└──────┬───────┘
-       ↓
-┌──────────────┐
-│   PREVENT    │
-└──────┬───────┘
-       ↓
-┌──────────────┐
-│    RESPOND   │
-└──────────────┘
----
 
 # 📸 Project Screenshots
 
@@ -547,6 +526,8 @@ Always ensure that security testing is performed only on systems, accounts, file
 
 ---
 
+
+
 <div align="center">
 
 ### 🛡️ CYBER AWARENESS LAB
@@ -558,3 +539,24 @@ Always ensure that security testing is performed only on systems, accounts, file
 © 2026 Cyber Awareness Lab · Created by Priyanshu Jangra
 
 </div>
+
+# 🛡️ Cyber Safety Framework
+
+Cyber Awareness Lab follows a simple approach:
+
+```text
+┌──────────────┐
+│   IDENTIFY   │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│  UNDERSTAND  │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│   PREVENT    │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│    RESPOND   │
+└──────────────┘
